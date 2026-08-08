@@ -3,7 +3,7 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: JasperLou
+title: JasperLou's Journey of CS
 subtitle: CS Freshman @ CHUHKSZ
 description: Project Developing Map of Holistic Development Assistant,and other CS learning or MATH study
 keywords:
@@ -75,7 +75,7 @@ meta_generator: true
 
 # Date / Time format
 ## You can customize the date format as defined in
-## http://momentjs.com/docs/#/displaying/format/
+## http://momentjs.com/docs/#displaying/format/
 date_format: YYYY-MM-DD
 time_format: HH:mm:ss
 ## updated_option supports 'mtime', 'date', 'empty'

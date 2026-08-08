@@ -99,6 +99,7 @@ theme: landscape
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
+# Pushes to source are built and published to main by GitHub Actions.
 
 deploy:
   type: git

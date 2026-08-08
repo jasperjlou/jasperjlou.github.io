@@ -43,6 +43,9 @@ jobs:
       - name: Build site
         run: npm run build
 
+      - name: Remove unused theme assets
+        run: rm -rf public/fancybox
+
       - name: Skip Jekyll processing
         run: touch public/.nojekyll
 

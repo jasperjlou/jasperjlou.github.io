@@ -1,18 +1,12 @@
-.DS_Store
-Thumbs.db
-db.json
-*.log
-node_modules/
-public/
-.deploy*/
-_multiconfig.yml
 # Dependencies
 node_modules/
 
 # Hexo generated files
 public/
 .deploy_git/
+.deploy*/
 db.json
+_multiconfig.yml
 
 # OS / editor
 .DS_Store

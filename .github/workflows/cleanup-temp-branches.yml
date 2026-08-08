@@ -1,0 +1,24 @@
+name: One-time branch cleanup
+
+on:
+  push:
+    branches:
+      - source
+    paths:
+      - '.github/workflows/cleanup-temp-branches.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove temporary deployment branches
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git init
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push origin --delete deploy-fix || true
+          git push origin --delete deploy-fix-2 || true

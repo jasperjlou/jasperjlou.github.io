@@ -11,5 +11,5 @@ rss: false
 favicon: false
 
 # The site currently has no gallery images. Disabling Fancybox avoids loading
-# its CSS and JavaScript on every page; re-enable it if image galleries are added.
+# its CSS and JavaScript; the deployment workflow also prunes its unused assets.
 fancybox: false

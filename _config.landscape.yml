@@ -1,0 +1,15 @@
+# Overrides for the npm-installed Landscape theme.
+# Keeping overrides here avoids editing files inside node_modules.
+
+menu:
+  Home: /
+  Projects: /projects
+  Archives: /archives
+
+# These features currently point to resources that do not exist on the site.
+rss: false
+favicon: false
+
+# The site currently has no gallery images. Disabling Fancybox avoids loading
+# its CSS and JavaScript on every page; re-enable it if image galleries are added.
+fancybox: false

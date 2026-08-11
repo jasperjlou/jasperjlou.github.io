@@ -1,6 +1,8 @@
 ---
 title: "Holistic Assistant: 一个面向 1500+ 学生的 RAG 学术顾问系统 — 从信息碎片化到结构化决策"
 date: 2025-12-24 14:00:00
+slug: holistic-assistant-case-study
+description: 全人助手阶段性技术案例：如何整合培养方案 PDF 与 SIS 课程数据，并处理提取、检索和上下文边界。
 categories:
   - Technical Case Study
 tags:
@@ -11,6 +13,10 @@ tags:
   - Gemini
   - Flask
   - Playwright
+project: holistic-assistant
+stage: 系统化
+order: 3
+featured: true
 ---
 
 **TL;DR**: 设计并实现了一个基于 Hybrid Context RAG 的学术顾问系统，整合分散在 36 份培养方案 PDF 和学校 SIS 系统的课程数据（1568 门课程 × 3 学期），为 CUHK-SZ 学生提供基于官方数据的 24/7 个性化课程咨询。核心技术挑战包括：PDF 非结构化数据提取（Gemini 去噪 + 正则候选）、SIS 反爬策略规避（会话持久化 + 节流）、上下文窗口管理（按学期分片 JSON）、以及 Windows 环境下的 multiprocessing 兼容性。

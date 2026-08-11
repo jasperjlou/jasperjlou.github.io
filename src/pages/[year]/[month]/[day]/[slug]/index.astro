@@ -1,0 +1,65 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatDate, normalizeList, toTaxonomySlug } from '@/data/site';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  return posts.map((post) => {
+    const date = post.data.date;
+    return {
+      params: {
+        year: String(date.getUTCFullYear()),
+        month: String(date.getUTCMonth() + 1).padStart(2, '0'),
+        day: String(date.getUTCDate()).padStart(2, '0'),
+        slug: post.data.slug,
+      },
+      props: { post },
+    };
+  });
+}
+
+interface Props { post: CollectionEntry<'posts'>; }
+const { post } = Astro.props;
+const { Content } = await render(post);
+const categories = normalizeList(post.data.categories);
+---
+
+<BaseLayout title={post.data.title} description={post.data.description} article>
+  <article>
+    <header class="article-hero">
+      <div class="shell article-hero__inner" data-reveal>
+        <div class="article-hero__meta">
+          <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+          {categories.map((category) => <a href={`/categories/${toTaxonomySlug(category)}/`}>{category}</a>)}
+          {post.data.stage && <span>{post.data.stage}</span>}
+        </div>
+        <h1>{post.data.title}</h1>
+        <p class="article-hero__description">{post.data.description}</p>
+        <div class="article-rule"><span>Development note · {post.data.order ? String(post.data.order).padStart(2, '0') : 'Archive'}</span></div>
+      </div>
+    </header>
+
+    <div class="article-shell">
+      <div>
+        {post.data.project && (
+          <div class="project-status-note">
+            <strong>阶段记录</strong>
+            <span>本文保留发布时的项目状态；当前能力、数据规模与公开服务状态请查看 <a href={`/projects/${post.data.project}/`}>全人助手开发专题</a>。</span>
+          </div>
+        )}
+        <div class="prose"><Content /></div>
+        <nav class="article-tags" aria-label="文章标签">
+          {post.data.tags.map((tag) => <a href={`/tags/${toTaxonomySlug(tag)}/`}>#{tag}</a>)}
+        </nav>
+      </div>
+      <aside class="article-aside">
+        <p>Published</p>
+        <strong>{formatDate(post.data.date)}</strong>
+        {post.data.project && (
+          <><p style="margin-top: 24px;">Part of</p><a href={`/projects/${post.data.project}/`}>全人助手开发 ↗</a></>
+        )}
+      </aside>
+    </div>
+  </article>
+</BaseLayout>

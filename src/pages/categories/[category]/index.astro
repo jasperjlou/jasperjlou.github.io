@@ -1,0 +1,27 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PostCard from '@/components/PostCard.astro';
+import { normalizeList, toTaxonomySlug } from '@/data/site';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  const categories = [...new Set(posts.flatMap((post) => normalizeList(post.data.categories)))];
+  return categories.map((category) => ({ params: { category: toTaxonomySlug(category) }, props: { category } }));
+}
+
+const { category } = Astro.props;
+const posts = (await getCollection('posts', ({ data }) =>
+  !data.draft && normalizeList(data.categories).includes(category)))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<BaseLayout title={`分类：${category}`} description={`JasperLou 的 ${category} 分类文章。`}>
+  <section class="page-hero"><div class="shell page-hero__grid">
+    <div><p class="eyebrow">Category archive</p><h1>{category}</h1></div>
+    <aside class="page-hero__aside"><p>{posts.length} 篇文章</p><a class="text-link" href="/notes/">返回全部文章</a></aside>
+  </div></section>
+  <section class="taxonomy-page"><div class="shell post-list">
+    {posts.map((post, index) => <PostCard post={post} index={index} />)}
+  </div></section>
+</BaseLayout>

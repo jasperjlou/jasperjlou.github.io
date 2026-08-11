@@ -1,0 +1,26 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PostCard from '@/components/PostCard.astro';
+import { toTaxonomySlug } from '@/data/site';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  const tags = [...new Set(posts.flatMap((post) => post.data.tags))];
+  return tags.map((tag) => ({ params: { tag: toTaxonomySlug(tag) }, props: { tag } }));
+}
+
+const { tag } = Astro.props;
+const posts = (await getCollection('posts', ({ data }) => !data.draft && data.tags.includes(tag)))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<BaseLayout title={`标签：${tag}`} description={`JasperLou 关于 ${tag} 的文章。`}>
+  <section class="page-hero"><div class="shell page-hero__grid">
+    <div><p class="eyebrow">Tag archive</p><h1>{tag}</h1></div>
+    <aside class="page-hero__aside"><p>{posts.length} 篇文章</p><a class="text-link" href="/notes/">返回全部文章</a></aside>
+  </div></section>
+  <section class="taxonomy-page"><div class="shell post-list">
+    {posts.map((post, index) => <PostCard post={post} index={index} />)}
+  </div></section>
+</BaseLayout>

@@ -1,0 +1,23 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { SITE } from '@/data/site';
+---
+
+<BaseLayout title="关于" description="关于 JasperLou、这座博客与正在进行的工程实践。">
+  <section class="page-hero">
+    <div class="shell page-hero__grid">
+      <div data-reveal><p class="eyebrow">About</p><h1>学习不是背景，<br />它就是工程的一部分。</h1></div>
+      <aside class="page-hero__aside" data-reveal><p>CS student at CUHK-Shenzhen · Building systems for clearer learning and planning.</p></aside>
+    </div>
+  </section>
+  <section class="about-page">
+    <div class="shell about-grid">
+      <div data-reveal><h2>JasperLou<br />JiaRUI Lou</h2></div>
+      <div class="about-copy" data-reveal>
+        <p>我在香港中文大学（深圳）学习计算机科学。这个网站用来记录我怎样理解问题、选择技术、验证数据，以及在结果不理想时重新调整方向。</p>
+        <p>目前最主要的长期项目是全人助手：一个围绕培养方案、课程关系和学生身份展开的个人学业规划系统。它让我同时处理数据工程、检索、产品交互和部署可靠性，也迫使我认真区分“能生成答案”和“能给出可信建议”。</p>
+        <p>如果你想讨论项目、课程系统或合作，可以通过 <a href={`mailto:${SITE.email}`}>{SITE.email}</a> 联系我，也可以在 <a href={SITE.github} target="_blank" rel="noopener noreferrer">GitHub</a> 查看代码。</p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

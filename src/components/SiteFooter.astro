@@ -1,0 +1,18 @@
+---
+import { SITE } from '@/data/site';
+---
+
+<footer class="site-footer">
+  <div class="shell site-footer__grid">
+    <div>
+      <p class="eyebrow">Keep building, keep writing</p>
+      <h2>把正在发生的工程，<br />写成可以回看的路径。</h2>
+    </div>
+    <div class="site-footer__links">
+      <a href={`mailto:${SITE.email}`}>Email</a>
+      <a href={SITE.github} target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href="/rss.xml">RSS</a>
+    </div>
+    <p class="site-footer__meta">© {new Date().getFullYear()} {SITE.author}<br />Built with Astro · Hosted on GitHub Pages</p>
+  </div>
+</footer>

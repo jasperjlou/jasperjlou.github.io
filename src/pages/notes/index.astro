@@ -1,0 +1,29 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PostCard from '@/components/PostCard.astro';
+import { toTaxonomySlug } from '@/data/site';
+
+const posts = (await getCollection('posts', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
+---
+
+<BaseLayout title="文章" description="全人助手开发、系统设计与计算机科学学习记录。">
+  <section class="page-hero">
+    <div class="shell page-hero__grid">
+      <div data-reveal><p class="eyebrow">Notes</p><h1>把阶段性的判断，<br />留在时间线上。</h1></div>
+      <aside class="page-hero__aside" data-reveal>
+        <p>文章按发布日期排列。项目专题负责呈现现在，文章负责保留当时。</p>
+        <div class="notes-controls">
+          {tags.map((tag) => <a href={`/tags/${toTaxonomySlug(tag)}/`}>{tag}</a>)}
+        </div>
+      </aside>
+    </div>
+  </section>
+  <section class="notes-page">
+    <div class="shell post-list" data-reveal>
+      {posts.map((post, index) => <PostCard post={post} index={index} />)}
+    </div>
+  </section>
+</BaseLayout>

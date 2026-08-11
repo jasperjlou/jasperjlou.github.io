@@ -1,0 +1,25 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { formatDate, postPath } from '@/data/site';
+
+interface Props {
+  post: CollectionEntry<'posts'>;
+  index?: number;
+  compact?: boolean;
+}
+
+const { post, index = 0, compact = false } = Astro.props;
+---
+
+<article class:list={['post-card', { 'post-card--compact': compact }]}>
+  <div class="post-card__meta">
+    <span>{String(index + 1).padStart(2, '0')}</span>
+    <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+    {post.data.stage && <em>{post.data.stage}</em>}
+  </div>
+  <div class="post-card__body">
+    <h3><a href={postPath(post)}>{post.data.title}</a></h3>
+    <p>{post.data.description}</p>
+  </div>
+  <a class="post-card__arrow" href={postPath(post)} aria-label={`阅读：${post.data.title}`}>↗</a>
+</article>

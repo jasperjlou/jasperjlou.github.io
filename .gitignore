@@ -1,12 +1,25 @@
-# Dependencies
+# Dependencies and Astro output
 node_modules/
+dist/
+.astro/
 
-# Hexo generated files
-public/
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Legacy Hexo output kept only in local old checkouts
+/public/
 .deploy_git/
 .deploy*/
 db.json
 _multiconfig.yml
+
+# Task-local and test caches
+.t/
+.sandbox-tmp/
+.pytest_cache/
+__pycache__/
 
 # OS / editor
 .DS_Store

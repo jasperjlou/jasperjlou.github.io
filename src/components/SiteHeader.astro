@@ -1,0 +1,42 @@
+---
+import { NAV_ITEMS, SITE } from '@/data/site';
+
+const { pathname } = Astro.url;
+const isActive = (href: string) =>
+  href === '/' ? pathname === '/' : pathname.startsWith(href);
+---
+
+<header class="site-header">
+  <div class="site-header__inner shell">
+    <a class="wordmark" href="/" aria-label={`${SITE.title} 首页`}>
+      <span class="wordmark__mark" aria-hidden="true">J</span>
+      <span class="wordmark__copy">
+        <strong>JasperLou</strong>
+        <small>Journey of CS</small>
+      </span>
+    </a>
+
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
+      <span>菜单</span><i aria-hidden="true"></i>
+    </button>
+
+    <nav id="primary-nav" class="primary-nav" aria-label="主导航">
+      {NAV_ITEMS.map((item) => (
+        <a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>
+          <small>{item.eyebrow}</small>
+          <span>{item.label}</span>
+        </a>
+      ))}
+    </nav>
+  </div>
+</header>
+
+<script>
+  const button = document.querySelector<HTMLButtonElement>('.nav-toggle');
+  const nav = document.querySelector<HTMLElement>('#primary-nav');
+  button?.addEventListener('click', () => {
+    const next = button.getAttribute('aria-expanded') !== 'true';
+    button.setAttribute('aria-expanded', String(next));
+    nav?.classList.toggle('is-open', next);
+  });
+</script>

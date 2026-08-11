@@ -2,7 +2,7 @@
 title: 第一次注册：全人助手已经在路上
 date: 2025-10-02 10:00:00
 slug: hello-world
-description: 全人助手开发记录的起点：从培养方案 PDF、SIS 课程信息与 AI 学业规划的最初设想开始。
+description: 第一次把博客搭起来时，我也记下了全人助手最早的想法：读培养方案、查 SIS，再用 AI 帮学生做学业规划。
 categories:
   - Diary
 tags:

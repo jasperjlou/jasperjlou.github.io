@@ -2,7 +2,7 @@
 title: '全人助手 ④：挫折 — Agent 时代，这个项目还有意义吗？'
 date: 2026-02-26 14:00:00.000
 slug: holistic-assistant-setback
-description: 当 Agent 与 Skill 快速发展后，重新审视全人助手的价值：真正难以替代的是可信数据、课程关系和个性化决策。
+description: AI Agent 和 Skill 发展得很快，我也开始怀疑全人助手还值不值得继续做。这篇文章写我为什么动摇，以及后来决定把重点放在哪里。
 categories:
   - Holistic Assistant
 tags:

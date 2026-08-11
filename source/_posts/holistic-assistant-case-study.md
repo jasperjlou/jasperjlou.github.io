@@ -2,7 +2,7 @@
 title: "Holistic Assistant: 一个面向 1500+ 学生的 RAG 学术顾问系统 — 从信息碎片化到结构化决策"
 date: 2025-12-24 14:00:00
 slug: holistic-assistant-case-study
-description: 全人助手阶段性技术案例：如何整合培养方案 PDF 与 SIS 课程数据，并处理提取、检索和上下文边界。
+description: 这篇文章回顾全人助手当时怎样处理培养方案 PDF、SIS 课程数据、检索和上下文长度。
 categories:
   - Technical Case Study
 tags:

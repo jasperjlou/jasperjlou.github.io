@@ -2,7 +2,7 @@
 title: 全人助手 MVP：从"培养方案 PDF"到 AI 驱动的学业规划（可行性验证）
 date: 2025-11-20 12:00:00
 slug: holistic-assistant-mvp
-description: 用三周完成全人助手的第一个可用原型，验证培养方案理解、模型路由和无数据库前端方案。
+description: 我用三周做出全人助手的第一个原型，试了培养方案理解、模型路由和不用数据库的前端方案。
 categories:
   - Projects
 tags:

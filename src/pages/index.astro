@@ -17,10 +17,10 @@ const latestPosts = posts.slice(0, 4);
       <div class="home-hero__intro" data-reveal>
         <p class="eyebrow">Computer science · systems · learning</p>
         <h1 class="display-title">JasperLou's<br /><span>Journey</span> of CS</h1>
-        <p class="home-hero__lead">这里记录我怎样把一个模糊的问题，逐步做成可以运行、可以检查，也愿意继续维护的系统。</p>
+        <p class="home-hero__lead">我在这里记录学过的东西、做过的项目，也记录那些写到一半才发现自己想错了的时刻。</p>
       </div>
       <aside class="home-hero__aside" data-reveal>
-        <p>CS student at CUHK-Shenzhen. I write about engineering decisions, product iterations and the parts that did not work the first time.</p>
+        <p>CS student at CUHK-Shenzhen. I write about what I build, what breaks and what I learn before trying again.</p>
         <div class="hero-index"><span>Now building</span><small>Holistic Assistant</small></div>
         <div class="hero-index"><span>Current focus</span><small>Reliable planning systems</small></div>
         <div class="hero-index"><span>Based in</span><small>Shenzhen, China</small></div>
@@ -34,9 +34,9 @@ const latestPosts = posts.slice(0, 4);
         <div class="section-heading" data-reveal>
           <div>
             <p class="eyebrow">Featured project · 01</p>
-            <h2>正在持续推进的<br />长期项目。</h2>
+            <h2>现在还在做的<br />长期项目。</h2>
           </div>
-          <p>不是把功能堆进一张项目卡，而是把需求、数据、界面和每次判断放回同一条开发路径。</p>
+          <p>我在整理校内课程数据，也在尝试用 AI 和规划算法回答学生会遇到的问题：怎么查课，怎么排课，怎么把四年的计划接起来。</p>
         </div>
 
         <div class="featured-project__grid">
@@ -68,9 +68,9 @@ const latestPosts = posts.slice(0, 4);
       <div class="section-heading" data-reveal>
         <div>
           <p class="eyebrow">Recent notes</p>
-          <h2>从起点、实现，<br />到重新判断。</h2>
+          <h2>从第一版写起，<br />也把走过的弯路留下来。</h2>
         </div>
-        <p>文章保留项目当时的状态。最新能力以项目专题中的核验时间和公开状态为准。</p>
+        <p>这些文章按时间留下项目当时的样子。最新进展放在项目专题里。</p>
       </div>
       <div class="post-list" data-reveal>
         {latestPosts.map((post, index) => <PostCard post={post} index={index} />)}

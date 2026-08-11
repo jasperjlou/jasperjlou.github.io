@@ -10,7 +10,7 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft))
 <BaseLayout title="归档" description="按时间排列的全部文章。">
   <section class="page-hero"><div class="shell page-hero__grid">
     <div><p class="eyebrow">Archive</p><h1>全部记录。</h1></div>
-    <aside class="page-hero__aside"><p>从最近一次反思，回到项目第一次注册的那天。</p></aside>
+    <aside class="page-hero__aside"><p>从最近一篇开始，也可以一直翻到项目最早的记录。</p></aside>
   </div></section>
   <section class="taxonomy-page"><div class="shell post-list">
     {posts.map((post, index) => <PostCard post={post} index={index} />)}

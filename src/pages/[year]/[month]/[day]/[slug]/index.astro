@@ -45,7 +45,7 @@ const categories = normalizeList(post.data.categories);
         {post.data.project && (
           <div class="project-status-note">
             <strong>阶段记录</strong>
-            <span>本文保留发布时的项目状态；当前能力、数据规模与公开服务状态请查看 <a href={`/projects/${post.data.project}/`}>全人助手开发专题</a>。</span>
+            <span>这篇文章写的是发布时的版本。全人助手现在做到哪里、数据更新到什么时候，可以去看 <a href={`/projects/${post.data.project}/`}>全人助手开发专题</a>。</span>
           </div>
         )}
         <div class="prose"><Content /></div>

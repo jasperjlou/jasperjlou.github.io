@@ -1,0 +1,31 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PostCard from '@/components/PostCard.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  const pairs = new Map<string, { year: string; month: string }>();
+  for (const post of posts) {
+    const year = String(post.data.date.getUTCFullYear());
+    const month = String(post.data.date.getUTCMonth() + 1).padStart(2, '0');
+    pairs.set(`${year}-${month}`, { year, month });
+  }
+  return [...pairs.values()].map(({ year, month }) => ({ params: { year, month } }));
+}
+
+const { year, month } = Astro.params;
+const posts = (await getCollection('posts', ({ data }) =>
+  !data.draft && String(data.date.getUTCFullYear()) === year && String(data.date.getUTCMonth() + 1).padStart(2, '0') === month))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<BaseLayout title={`${year}.${month} 归档`} description={`${year} 年 ${month} 月发布的文章。`}>
+  <section class="page-hero"><div class="shell page-hero__grid">
+    <div><p class="eyebrow">Monthly archive</p><h1>{year}.{month}</h1></div>
+    <aside class="page-hero__aside"><p>{posts.length} 篇文章</p><a class="text-link" href="/archives/">查看全部归档</a></aside>
+  </div></section>
+  <section class="taxonomy-page"><div class="shell post-list">
+    {posts.map((post, index) => <PostCard post={post} index={index} />)}
+  </div></section>
+</BaseLayout>

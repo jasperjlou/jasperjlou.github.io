@@ -2,11 +2,16 @@
 title: 第一次注册：全人助手已经在路上
 date: 2025-10-02 10:00:00
 slug: hello-world
+description: 全人助手开发记录的起点：从培养方案 PDF、SIS 课程信息与 AI 学业规划的最初设想开始。
 categories:
   - Diary
 tags:
   - CUHK-SZ
   - Holistic Assistant
+project: holistic-assistant
+stage: 起点
+order: 1
+featured: false
 ---
 
 这天是我第一次把博客搭起来、第一次把内容部署出去。

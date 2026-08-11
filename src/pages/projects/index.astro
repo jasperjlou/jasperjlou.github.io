@@ -1,0 +1,44 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ProjectVisual from '@/components/ProjectVisual.astro';
+
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<BaseLayout title="项目" description="JasperLou 的长期工程项目与开发记录。">
+  <section class="page-hero">
+    <div class="shell page-hero__grid">
+      <div data-reveal>
+        <p class="eyebrow">Projects</p>
+        <h1>项目不是陈列，<br />而是持续发生。</h1>
+      </div>
+      <aside class="page-hero__aside" data-reveal>
+        <p>这里按长期问题组织项目，而不是按技术栈堆放卡片。每个专题都包含当前状态、系统边界和真实开发记录。</p>
+        <small>{projects.length} active project collection</small>
+      </aside>
+    </div>
+  </section>
+
+  <section class="project-index">
+    <div class="shell">
+      {projects.map((project, index) => (
+        <article class="project-index__feature">
+          <div data-reveal>
+            <span class="project-index__number">PROJECT · {String(index + 1).padStart(2, '0')}</span>
+            <div class="status-line" style="margin-top: 24px;">{project.data.status}</div>
+            <h2>{project.data.title}<small>{project.data.englishTitle}</small></h2>
+            <p>{project.data.summary}</p>
+            <div class="button-row">
+              <a class="button button--accent" href={`/projects/${project.id}/`}>查看项目</a>
+              <a class="button" href={project.data.githubUrl} target="_blank" rel="noopener noreferrer">查看源码</a>
+            </div>
+          </div>
+          <div data-reveal>
+            <ProjectVisual image={project.data.heroImage} alt={project.data.heroAlt} compact />
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+</BaseLayout>

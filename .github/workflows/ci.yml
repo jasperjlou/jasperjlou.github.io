@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -28,5 +28,21 @@ jobs:
       - name: Audit dependencies
         run: npm audit --audit-level=high
 
-      - name: Build site
+      - name: Validate content and types
+        run: npm run check
+
+      - name: Build static site
         run: npm run build
+
+      - name: Verify required output
+        shell: bash
+        run: |
+          test -f dist/index.html
+          test -f dist/projects/holistic-assistant/index.html
+          test -f dist/2026/02/26/holistic-assistant-setback/index.html
+          test -f dist/CNAME
+          test -f dist/rss.xml
+          test -f dist/sitemap-index.xml
+          grep -q 'jasperjlou.me' dist/CNAME
+          grep -q '<html lang="zh-CN">' dist/index.html
+          grep -q '<link rel="canonical" href="https://jasperjlou.me/' dist/index.html

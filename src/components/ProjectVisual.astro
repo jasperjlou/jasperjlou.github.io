@@ -1,0 +1,38 @@
+---
+interface Props {
+  image: string;
+  alt: string;
+  compact?: boolean;
+}
+
+const { image, alt, compact = false } = Astro.props;
+---
+
+<figure class:list={['project-visual', { 'project-visual--compact': compact }]}>
+  <img class="project-visual__campus" src={image} alt={alt} width="1600" height="1000" loading={compact ? 'lazy' : 'eager'} />
+  <div class="project-visual__veil" aria-hidden="true"></div>
+  <figcaption class="project-visual__caption">
+    <span>CUHK-SHENZHEN</span>
+    <small>Plan with clarity</small>
+  </figcaption>
+  <div class="product-window" aria-label="全人助手产品界面示意">
+    <header>
+      <span class="product-window__mark">H</span>
+      <span><b>HOLISTIC ASSISTANT</b><small>Personal planning</small></span>
+      <i></i><i></i>
+    </header>
+    <div class="product-window__body">
+      <div class="product-window__intro">
+        <small>Your academic compass</small>
+        <strong>把课程与长期目标<br />放在同一张地图上</strong>
+        <p>从最需要推进的一件事开始。</p>
+      </div>
+      <div class="product-window__modules">
+        <div><b>01</b><span>聊天规划</span></div>
+        <div><b>02</b><span>规划蓝图</span></div>
+        <div><b>03</b><span>课程资源</span></div>
+        <div><b>04</b><span>学业轨迹</span></div>
+      </div>
+    </div>
+  </div>
+</figure>

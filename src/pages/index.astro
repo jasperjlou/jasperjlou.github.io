@@ -1,0 +1,81 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ProjectVisual from '@/components/ProjectVisual.astro';
+import PostCard from '@/components/PostCard.astro';
+
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+const project = projects[0];
+const posts = (await getCollection('posts', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const latestPosts = posts.slice(0, 4);
+---
+
+<BaseLayout>
+  <section class="home-hero">
+    <div class="shell home-hero__grid">
+      <div class="home-hero__intro" data-reveal>
+        <p class="eyebrow">Computer science · systems · learning</p>
+        <h1 class="display-title">JasperLou's<br /><span>Journey</span> of CS</h1>
+        <p class="home-hero__lead">这里记录我怎样把一个模糊的问题，逐步做成可以运行、可以检查，也愿意继续维护的系统。</p>
+      </div>
+      <aside class="home-hero__aside" data-reveal>
+        <p>CS student at CUHK-Shenzhen. I write about engineering decisions, product iterations and the parts that did not work the first time.</p>
+        <div class="hero-index"><span>Now building</span><small>Holistic Assistant</small></div>
+        <div class="hero-index"><span>Current focus</span><small>Reliable planning systems</small></div>
+        <div class="hero-index"><span>Based in</span><small>Shenzhen, China</small></div>
+      </aside>
+    </div>
+  </section>
+
+  {project && (
+    <section class="featured-project">
+      <div class="shell">
+        <div class="section-heading" data-reveal>
+          <div>
+            <p class="eyebrow">Featured project · 01</p>
+            <h2>正在持续推进的<br />长期项目。</h2>
+          </div>
+          <p>不是把功能堆进一张项目卡，而是把需求、数据、界面和每次判断放回同一条开发路径。</p>
+        </div>
+
+        <div class="featured-project__grid">
+          <div class="featured-project__copy" data-reveal>
+            <div class="status-line">{project.data.status}</div>
+            <h3>{project.data.title}<small>{project.data.englishTitle}</small></h3>
+            <p>{project.data.description}</p>
+            <div class="button-row">
+              <a class="button button--accent" href={`/projects/${project.id}/`}>进入项目专题</a>
+              <a class="button" href={project.data.liveUrl} target="_blank" rel="noopener noreferrer">打开产品</a>
+            </div>
+          </div>
+          <div data-reveal>
+            <ProjectVisual image={project.data.heroImage} alt={project.data.heroAlt} compact />
+          </div>
+        </div>
+
+        <div class="metric-strip" data-reveal>
+          {project.data.metrics.map((metric) => (
+            <div class="metric-strip__item"><strong>{metric.value}</strong><span>{metric.label}</span></div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="latest-notes">
+    <div class="shell">
+      <div class="section-heading" data-reveal>
+        <div>
+          <p class="eyebrow">Recent notes</p>
+          <h2>从起点、实现，<br />到重新判断。</h2>
+        </div>
+        <p>文章保留项目当时的状态。最新能力以项目专题中的核验时间和公开状态为准。</p>
+      </div>
+      <div class="post-list" data-reveal>
+        {latestPosts.map((post, index) => <PostCard post={post} index={index} />)}
+      </div>
+      <div style="margin-top: 34px;"><a class="text-link" href="/notes/">查看全部文章</a></div>
+    </div>
+  </section>
+</BaseLayout>

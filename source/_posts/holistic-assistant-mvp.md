@@ -1,6 +1,8 @@
 ---
 title: 全人助手 MVP：从"培养方案 PDF"到 AI 驱动的学业规划（可行性验证）
 date: 2025-11-20 12:00:00
+slug: holistic-assistant-mvp
+description: 用三周完成全人助手的第一个可用原型，验证培养方案理解、模型路由和无数据库前端方案。
 categories:
   - Projects
 tags:
@@ -9,6 +11,10 @@ tags:
   - Flask
   - Gemini
   - Prototype
+project: holistic-assistant
+stage: MVP
+order: 2
+featured: false
 ---
 
 **TL;DR**: 用 3 周时间完成了"全人助手"的第一个可用原型（MVP），验证了"用 AI 整合培养方案 PDF 做学业规划"的可行性。核心特性：**Hybrid Context**（本地 PDF + 内置权威资料）、**Smart Routing**（Flash 快速查询 + Pro 深度规划）、**Orbit UI**（行星轨道式交互）。227 行 Flask 后端 + 1189 行原生 JS 前端，无需数据库，支持 36 个专业的培养方案查询。

@@ -1,0 +1,35 @@
+{
+  "seoTitle": "JasperLou's Journey of CS",
+  "seoDescription": "JasperLou 的计算机科学学习记录、项目开发和全人助手更新。",
+  "sections": [
+    {
+      "_template": "hero",
+      "eyebrow": "Computer science · systems · learning",
+      "titleFirst": "JasperLou's",
+      "titleAccent": "Journey",
+      "titleLast": "of CS",
+      "lead": "我在这里记录学过的东西、做过的项目，也记录那些我自己的解决方案",
+      "aside": "CS student at CUHK-Shenzhen. I write about what I build, what breaks and what I learn before trying again.",
+      "facts": [
+        { "label": "Now building", "value": "Holistic Assistant" },
+        { "label": "Current focus", "value": "Reliable planning systems" },
+        { "label": "Based in", "value": "Shenzhen, China" }
+      ]
+    },
+    {
+      "_template": "featuredProject",
+      "eyebrow": "Featured project · 01",
+      "titleFirst": "现在还在做的",
+      "titleLast": "长期项目",
+      "intro": "我在整理校内课程数据，也在尝试用 AI 和规划算法回答学生会遇到的问题：怎么查课，怎么排课，怎么把四年的计划接起来。"
+    },
+    {
+      "_template": "latestNotes",
+      "eyebrow": "Recent notes",
+      "titleFirst": "从第一版写起，",
+      "titleLast": "也把走过的弯路留下来",
+      "intro": "这些文章按时间留下项目当时的样子。最新进展放在项目专题里。",
+      "linkLabel": "查看全部文章"
+    }
+  ]
+}

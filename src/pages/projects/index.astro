@@ -6,12 +6,12 @@ import ProjectVisual from '@/components/ProjectVisual.astro';
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 ---
 
-<BaseLayout title="项目" description="JasperLou 的长期工程项目与开发记录。">
+<BaseLayout title="项目" description="JasperLou 的长期工程项目与开发记录">
   <section class="page-hero">
     <div class="shell page-hero__grid">
       <div data-reveal>
         <p class="eyebrow">Projects</p>
-        <h1>项目正在这里发生。</h1>
+        <h1>项目正在这里发生</h1>
       </div>
       <aside class="page-hero__aside" data-reveal>
         <p>这里按长期问题组织项目，也记录我学新技术、改设计和推翻旧想法的过程。每个专题都会写清当前状态、系统边界和开发记录。</p>

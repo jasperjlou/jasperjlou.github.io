@@ -8,6 +8,11 @@ dist/
 .env.*
 !.env.example
 
+# TinaCMS generated client and local cache
+tina/__generated__/
+.tina/
+static/admin/
+
 # Legacy Hexo output kept only in local old checkouts
 /public/
 .deploy_git/

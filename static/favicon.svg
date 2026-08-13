@@ -1,6 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
   <title id="title">JasperLou J monogram</title>
-  <rect width="64" height="64" rx="12" fill="#24211d"/>
-  <path d="M15 12h35v9H39v21c0 11-6 17-17 17-7 0-13-3-17-9l8-5c2 4 5 6 9 6 5 0 8-3 8-9V21H15z" fill="#f2eee4"/>
-  <path d="M44 12h6v9h-6z" fill="#9b4a3d"/>
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="#24211d"/>
+  <path
+    d="M17 16h30M39 16v23c0 9.5-5 15-14 15-5.8 0-10-2.4-13-7"
+    fill="none"
+    stroke="#f2eee4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="8"
+  />
+  <circle cx="12" cy="47" r="4" fill="#9b4a3d"/>
 </svg>

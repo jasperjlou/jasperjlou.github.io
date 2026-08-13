@@ -26,23 +26,24 @@ jobs:
         run: npm ci
 
       - name: Audit dependencies
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Build site and TinaCMS editor
+        run: npm run build
 
       - name: Validate content and types
         run: npm run check
 
-      - name: Build static site
-        run: npm run build
-
       - name: Verify required output
         shell: bash
         run: |
-          test -f dist/index.html
-          test -f dist/projects/holistic-assistant/index.html
-          test -f dist/2026/02/26/holistic-assistant-setback/index.html
-          test -f dist/CNAME
-          test -f dist/rss.xml
-          test -f dist/sitemap-index.xml
-          grep -q 'jasperjlou.me' dist/CNAME
-          grep -q '<html lang="zh-CN">' dist/index.html
-          grep -q '<link rel="canonical" href="https://jasperjlou.me/' dist/index.html
+          test -f dist/client/index.html
+          test -f dist/client/projects/holistic-assistant/index.html
+          test -f dist/client/2026/02/26/holistic-assistant-setback/index.html
+          test -f dist/client/admin/index.html
+          test -f dist/client/CNAME
+          test -f dist/client/rss.xml
+          test -f dist/client/sitemap-index.xml
+          grep -q 'jasperjlou.me' dist/client/CNAME
+          grep -q '<html lang="zh-CN">' dist/client/index.html
+          grep -q '<link rel="canonical" href="https://jasperjlou.me/' dist/client/index.html

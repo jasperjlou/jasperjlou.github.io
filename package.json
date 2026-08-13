@@ -7,20 +7,28 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
+    "dev": "tinacms dev -c \"astro dev\"",
+    "dev:site": "astro dev",
+    "start": "npm run dev",
+    "build": "tinacms build --local --skip-cloud-checks -c \"astro build\"",
+    "build:cloud": "tinacms build --content=local -c \"astro build\"",
+    "preview": "node ./dist/server/entry.mjs",
     "check": "astro check",
-    "validate": "npm run check && npm run build"
+    "validate": "npm run build && npm run check"
   },
   "dependencies": {
+    "@astrojs/node": "^11.1.1",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
+    "@tinacms/astro": "^0.6.1",
     "astro": "^7.2.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@tinacms/cli": "^2.5.6",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "tinacms": "^3.11.0",
     "typescript": "^6.0.3"
   }
 }

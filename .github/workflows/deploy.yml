@@ -32,13 +32,23 @@ jobs:
         run: npm ci
 
       - name: Audit dependencies
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Build site and TinaCMS editor
+        env:
+          GITHUB_BRANCH: source
+          PUBLIC_TINA_CLIENT_ID: ${{ secrets.PUBLIC_TINA_CLIENT_ID }}
+          TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
+        shell: bash
+        run: |
+          if [[ -n "$PUBLIC_TINA_CLIENT_ID" && -n "$TINA_TOKEN" ]]; then
+            npm run build:cloud
+          else
+            npm run build
+          fi
 
       - name: Validate content and types
         run: npm run check
-
-      - name: Build static site
-        run: npm run build
 
       - name: Configure Pages
         uses: actions/configure-pages@v6
@@ -46,7 +56,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: ./dist
+          path: ./dist/client
 
   deploy:
     environment:

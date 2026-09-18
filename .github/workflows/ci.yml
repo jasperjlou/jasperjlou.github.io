@@ -39,6 +39,8 @@ jobs:
         run: |
           test -f dist/client/index.html
           test -f dist/client/projects/holistic-assistant/index.html
+          test -f dist/client/projects/market-watchdog/index.html
+          test -f dist/client/projects/ai-sync/index.html
           test -f dist/client/2026/02/26/holistic-assistant-setback/index.html
           test -f dist/client/admin/index.html
           test -f dist/client/CNAME

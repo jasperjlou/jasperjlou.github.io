@@ -1,0 +1,19 @@
+---
+interface Props {
+  name: string;
+  steps: { title: string; detail: string }[];
+  compact?: boolean;
+}
+const { name, steps, compact = false } = Astro.props;
+---
+<figure class:list={['project-pipeline', { 'project-pipeline--compact': compact }]}>
+  <figcaption><span class="eyebrow">System design</span><span>{name} · 处理流程示意</span></figcaption>
+  <ol>
+    {steps.map((step, index) => (
+      <li>
+        <span class="project-pipeline__index">{String(index + 1).padStart(2, '0')}</span>
+        <div><strong>{step.title}</strong><p>{step.detail}</p></div>
+      </li>
+    ))}
+  </ol>
+</figure>

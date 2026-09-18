@@ -1,11 +1,15 @@
 ---
 title: 全人助手开发
 englishTitle: Holistic Assistant
+category: holistic-assistant
+repositoryVisibility: private
+visual: campus
+technicalTitle: 把学校文件里的规则，写进可以检查的规划。
 order: 1
 status: 公共预览 · 持续开发
 statusDetail: 课程索引、培养方案和规划工具已经上线。AI 功能是否可用，以在线版本当时的运行状态为准。
 description: 全人助手是香港中文大学（深圳）学生使用的学业规划系统。它整理培养方案、SIS 课程信息和全校规则，帮助学生查课、排课和检查毕业要求。
-summary: 项目的核心是持续整理学校规则、课程结构和学生信息，再把这些数据做成可以编辑、可以检查的可视化规划。
+summary: 我把培养方案 PDF、SIS 课程信息和先修关系整理到一起，再做成可以修改的四年规划。这里面反复要解决的问题，是怎么保留学校文件里的课程顺序、选修课位和选择组。
 liveUrl: https://holisticassistant.com/
 githubUrl: https://github.com/jasperjlou/holistic-assistant
 launched: "2025.10"
@@ -48,6 +52,15 @@ principles:
   - 先看学校文件，再看模型生成的内容
   - 数据、推断和学生自己填写的信息分开显示
   - 每份规划都能修改，也会保留检查结果
+engineering:
+  - title: PDF 和 SIS 怎么对上
+    detail: PDF 描述培养方案的结构，SIS 提供每门课的具体信息。我按课程代码和专业方案组织分层 JSON 索引，再为检索和路线图生成准备上下文，避免只拿到零散的课程片段。
+  - title: 选修课位不能随便补成一门课
+    detail: 路线图解析会区分固定课程、选修课位和多选一课程组。校验逻辑检查学期位置、课程标题和专业方向，前端也保留这些结构，方便学生继续修改。
+  - title: 服务启动时不用重新读完所有材料
+    detail: Docker 构建时预先生成课程索引，运行时使用缓存；PDF 知识库按需加载，并通过线程锁处理并发访问。健康检查单独返回服务状态，不触发 PDF 解析。
+  - title: 把容易出错的情况留在测试里
+    detail: 仓库中保留培养方案正确性、课程上下文、接口降级和路线图拖动等测试。已有测试可以帮助检查修改后的行为，实际检索效果还需要用固定问题集继续评估。
 stack:
   - Flask
   - Gemini API
@@ -55,6 +68,7 @@ stack:
   - Hybrid retrieval
   - Layered JSON indexes
   - Vanilla JavaScript
+  - Docker
 ---
 
 全人助手从一个很简单的问题开始：能不能让模型读懂培养方案 PDF？后来我加入了 SIS 课程索引、全校毕业规则、先修关系图和可编辑路线图。现在学生可以在同一个地方查课程、看要求、调整自己的四年规划。

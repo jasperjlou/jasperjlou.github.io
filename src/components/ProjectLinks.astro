@@ -1,0 +1,16 @@
+---
+import type { CollectionEntry } from 'astro:content';
+interface Props { project: CollectionEntry<'projects'>; detail?: boolean; }
+const { project, detail = false } = Astro.props;
+const { liveUrl, githubUrl, repositoryVisibility } = project.data;
+---
+<div class="project-links">
+  <div class="button-row">
+    {!detail && <a class="button button--accent" href={`/projects/${project.id}/`}>看我怎么做的</a>}
+    {detail && liveUrl && <a class="button button--accent" href={liveUrl} target="_blank" rel="noopener noreferrer">在线体验</a>}
+    {repositoryVisibility === 'public'
+      ? <a class="button" href={githubUrl} target="_blank" rel="noopener noreferrer">GitHub 源码</a>
+      : <a class="text-link" href="https://github.com/jasperjlou" target="_blank" rel="noopener noreferrer">我的 GitHub</a>}
+  </div>
+  {repositoryVisibility === 'private' && <small>源码仓库私有，技术说明见项目介绍。</small>}
+</div>

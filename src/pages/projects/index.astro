@@ -2,43 +2,56 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ProjectVisual from '@/components/ProjectVisual.astro';
+import ProjectPipeline from '@/components/ProjectPipeline.astro';
+import ProjectLinks from '@/components/ProjectLinks.astro';
+import { PROJECT_GROUPS } from '@/data/project-groups';
 
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 ---
 
-<BaseLayout title="项目" description="JasperLou 的长期工程项目与开发记录">
+<BaseLayout title="项目" description="全人助手、Market Watchdog 和 AI Sync：我做过的项目、技术实现与开发记录。">
   <section class="page-hero">
     <div class="shell page-hero__grid">
       <div data-reveal>
         <p class="eyebrow">Projects</p>
-        <h1>项目正在这里发生</h1>
+        <h1>我做过的项目</h1>
       </div>
       <aside class="page-hero__aside" data-reveal>
-        <p>这里按长期问题组织项目，也记录我学新技术、改设计和推翻旧想法的过程。每个专题都会写清当前状态、系统边界和开发记录。</p>
-        <small>{projects.length} active project collection</small>
+        <p>有些项目来自选课时遇到的问题，有些是我自己想用的工具。我把为什么做、具体怎么做，以及还没解决的问题放在这里。</p>
+        <a class="text-link" href="https://github.com/jasperjlou" target="_blank" rel="noopener noreferrer">github.com/jasperjlou</a>
       </aside>
     </div>
   </section>
 
-  <section class="project-index">
+  <nav class="shell project-category-nav" aria-label="项目分类">
+    {PROJECT_GROUPS.map((group) => <a href={`#${group.id}`}>{group.title}<small>{projects.filter((p) => p.data.category === group.id).length} 个项目</small></a>)}
+  </nav>
+  <div class="project-index">
     <div class="shell">
-      {projects.map((project, index) => (
+      {PROJECT_GROUPS.map((group) => (
+      <section class="project-group" id={group.id} aria-labelledby={`${group.id}-title`}>
+        <header class="project-group__heading">
+          <div><h2 id={`${group.id}-title`}>{group.title}</h2><span>{group.subtitle}</span></div><p>{group.description}</p>
+        </header>
+      {projects.filter((project) => project.data.category === group.id).map((project) => (
         <article class="project-index__feature">
           <div data-reveal>
-            <span class="project-index__number">PROJECT · {String(index + 1).padStart(2, '0')}</span>
+            <span class="project-index__number">PROJECT · {String(project.data.order).padStart(2, '0')}</span>
             <div class="status-line" style="margin-top: 24px;">{project.data.status}</div>
-            <h2>{project.data.title}<small>{project.data.englishTitle}</small></h2>
+            <h3>{project.data.title}<small>{project.data.englishTitle}</small></h3>
             <p>{project.data.summary}</p>
-            <div class="button-row">
-              <a class="button button--accent" href={`/projects/${project.id}/`}>查看项目</a>
-              <a class="button" href={project.data.githubUrl} target="_blank" rel="noopener noreferrer">查看源码</a>
-            </div>
+            <div class="stack-line" aria-label="技术栈">{project.data.stack.slice(0, 5).map((item) => <span>{item}</span>)}</div>
+            <ProjectLinks project={project} />
           </div>
           <div data-reveal>
-            <ProjectVisual image={project.data.heroImage} alt={project.data.heroAlt} compact />
+            {project.data.visual === 'campus' && project.data.heroImage
+              ? <ProjectVisual image={project.data.heroImage} alt={project.data.heroAlt ?? project.data.title} compact />
+              : <ProjectPipeline name={project.data.englishTitle} steps={project.data.pipeline} compact />}
           </div>
         </article>
       ))}
+      </section>
+      ))}
     </div>
-  </section>
+  </div>
 </BaseLayout>

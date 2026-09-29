@@ -1,8 +1,8 @@
 export const SITE = {
   title: "JasperLou's Journey of CS",
   shortTitle: 'JasperLou',
-  description: 'JasperLou 的计算机科学学习记录、全人助手开发，以及 AI + Tools 多领域工具实践。',
-  author: 'JiaRUI Lou',
+  description: 'Jasper Jiarui Lou 的计算机科学、机器学习与 Agent 项目记录，包括全人助手与 CUHKSZ MicroWorld。',
+  author: 'Jasper Jiarui Lou',
   email: '125090445@link.cuhk.edu.cn',
   github: 'https://github.com/jasperjlou',
   url: 'https://jasperjlou.me',

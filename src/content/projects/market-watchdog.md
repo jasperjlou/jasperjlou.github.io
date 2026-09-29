@@ -8,7 +8,8 @@ order: 3
 status: Public source · Read-only by design · Active
 statusDetail: The public repository includes market-data routing, feature extraction, evidence grading, stateful alerting, optional AI coordination, runtime-isolation policy, read-only portfolio snapshot support, and regression tests. Broker writes remain outside the application path.
 description: A read-only market intelligence system for U.S. equities that combines market data, filings/news evidence, deterministic risk gates, optional bounded AI review, and stateful deduplication.
-summary: I built Market Watchdog to answer a practical problem: price moves, filings, and news arrive from different sources, while repeated coverage can create noisy alerts. The system keeps source/time metadata, grades evidence, tracks event state, and only escalates events that pass explicit rules.
+summary: >-
+  I built Market Watchdog to answer a practical problem: price moves, filings, and news arrive from different sources, while repeated coverage can create noisy alerts. The system keeps source/time metadata, grades evidence, tracks event state, and only escalates events that pass explicit rules.
 githubUrl: https://github.com/jasperjlou/market-watchdog
 launched: "2026.09 · ongoing"
 lastVerified: 2026-09-29

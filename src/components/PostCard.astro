@@ -21,5 +21,5 @@ const { post, index = 0, compact = false } = Astro.props;
     <h3><a href={postPath(post)}>{post.data.title}</a></h3>
     <p>{post.data.description}</p>
   </div>
-  <a class="post-card__arrow" href={postPath(post)} aria-label={`阅读：${post.data.title}`}>↗</a>
+  <a class="post-card__arrow" href={postPath(post)} aria-label={`Read: ${post.data.title}`}>↗</a>
 </article>

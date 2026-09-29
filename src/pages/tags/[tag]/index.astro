@@ -15,10 +15,10 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft && data.ta
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 ---
 
-<BaseLayout title={`标签：${tag}`} description={`JasperLou 关于 ${tag} 的文章。`}>
+<BaseLayout title={`Tag: ${tag}`} description={`JasperLou notes tagged ${tag}.`}>
   <section class="page-hero"><div class="shell page-hero__grid">
     <div><p class="eyebrow">Tag archive</p><h1>{tag}</h1></div>
-    <aside class="page-hero__aside"><p>{posts.length} 篇文章</p><a class="text-link" href="/notes/">返回全部文章</a></aside>
+    <aside class="page-hero__aside"><p>{posts.length} post(s)</p><a class="text-link" href="/notes/">Back to all notes</a></aside>
   </div></section>
   <section class="taxonomy-page"><div class="shell post-list">
     {posts.map((post, index) => <PostCard post={post} index={index} />)}

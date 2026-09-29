@@ -1,19 +1,19 @@
 {
   "seoTitle": "JasperLou's Journey of CS",
-  "seoDescription": "JasperLou 的计算机科学学习记录、全人助手开发，以及 AI + Tools 多领域工具实践。",
+  "seoDescription": "Jasper Jiarui Lou 的计算机科学、机器学习与 Agent 项目记录，包括全人助手与 CUHKSZ MicroWorld。",
   "sections": [
     {
       "_template": "hero",
-      "eyebrow": "Computer science · systems · learning",
+      "eyebrow": "Computer science · machine learning · agents",
       "titleFirst": "JasperLou's",
       "titleAccent": "Journey",
       "titleLast": "of CS",
-      "lead": "我在这里记录学过的东西、做过的项目，也记录那些我自己的解决方案",
-      "aside": "CS student at CUHK-Shenzhen. I write about what I build, what breaks and what I learn before trying again.",
+      "lead": "我在这里记录机器学习、系统实现和科研训练，也记录把想法做成可运行项目的过程。",
+      "aside": "CS student at CUHK-Shenzhen. I am exploring machine learning, optimization and agent systems through research-oriented projects and careful implementation.",
       "facts": [
-        { "label": "Now building", "value": "Holistic Assistant" },
-        { "label": "Current focus", "value": "Reliable planning systems" },
-        { "label": "Based in", "value": "Shenzhen, China" }
+        { "label": "Research focus", "value": "Machine Learning" },
+        { "label": "Building", "value": "Holistic Assistant · CUHKSZ MicroWorld" },
+        { "label": "Supporting interests", "value": "Optimization · Probability · Agent Systems" }
       ]
     },
     {
@@ -21,14 +21,14 @@
       "eyebrow": "Featured project · 01",
       "titleFirst": "现在还在做的",
       "titleLast": "长期项目",
-      "intro": "我在整理校内课程数据，也在尝试用 AI 和规划算法回答学生会遇到的问题：怎么查课，怎么排课，怎么把四年的计划接起来。"
+      "intro": "我在持续迭代全人助手，也在构建 CUHKSZ MicroWorld：把校园空间、时间约束、交通选择与 Agent 行为放进可运行、可记录、可评测的环境里。"
     },
     {
       "_template": "latestNotes",
       "eyebrow": "Recent notes",
       "titleFirst": "从第一版写起，",
       "titleLast": "也把走过的弯路留下来",
-      "intro": "这些文章按时间留下项目当时的样子。最新进展放在项目专题里。",
+      "intro": "这些文章按时间留下项目和学习当时的样子；最新进展会优先放在项目专题和公开仓库里。",
       "linkLabel": "查看全部文章"
     }
   ]

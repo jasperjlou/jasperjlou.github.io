@@ -9,12 +9,12 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft))
 const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
 ---
 
-<BaseLayout title="文章" description="全人助手开发、系统设计与计算机科学学习记录。">
+<BaseLayout title="Notes" description="Development notes, project decisions, and computer science learning records by Jasper Jiarui Lou.">
   <section class="page-hero">
     <div class="shell page-hero__grid">
-      <div data-reveal><p class="eyebrow">Notes</p><h1>文章都按时间<br />留在这里</h1></div>
+      <div data-reveal><p class="eyebrow">Notes</p><h1>Keep the timeline,<br />not only the polished result</h1></div>
       <aside class="page-hero__aside" data-reveal>
-        <p>有些记录写的是完成，有些写的是做错以后重新判断。项目专题放最新状态，文章保留当时的想法。</p>
+        <p>Some notes record things that worked; others preserve a wrong turn and the reasoning that followed. Project pages describe the current system, while dated posts remain snapshots of what I thought at the time.</p>
         <div class="notes-controls">
           {tags.map((tag) => <a href={`/tags/${toTaxonomySlug(tag)}/`}>{tag}</a>)}
         </div>

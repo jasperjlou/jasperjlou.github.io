@@ -3,20 +3,21 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import { SITE } from '@/data/site';
 ---
 
-<BaseLayout title="关于" description="关于 Jasper Jiarui Lou、计算机科学、机器学习与 Agent 项目。">
+<BaseLayout title="About" description="About Jasper Jiarui Lou: computer science, machine learning, optimization, and agent systems.">
   <section class="page-hero">
     <div class="shell page-hero__grid">
-      <div data-reveal><p class="eyebrow">About</p><h1>怎么理解理论，<br />怎么把系统真正做出来</h1></div>
-      <aside class="page-hero__aside" data-reveal><p>CS student at CUHK-Shenzhen · Interested in machine learning, optimization and agent systems.</p></aside>
+      <div data-reveal><p class="eyebrow">About</p><h1>Understand the theory.<br />Build the system.</h1></div>
+      <aside class="page-hero__aside" data-reveal><p>CS student at CUHK-Shenzhen · Interested in machine learning, optimization, probability, and agent systems.</p></aside>
     </div>
   </section>
   <section class="about-page">
     <div class="shell about-grid">
       <div data-reveal><h2>Jasper Jiarui Lou<br />娄家瑞</h2></div>
       <div class="about-copy" data-reveal>
-        <p>我在香港中文大学（深圳）学习计算机科学。现在的主要兴趣是机器学习，并把优化、概率与数学理论作为进一步理解模型和算法的基础。</p>
-        <p>我也持续做可运行的 AI 系统与 Agent 环境。长期项目包括面向校内学习规划的全人助手，以及用于校园导航、时间约束、交通决策和 Agent 评测的 CUHKSZ MicroWorld。这个网站会同时保留项目实现、阶段性思考和学习记录。</p>
-        <p>想聊科研、项目或合作，可以给我写邮件：<a href={`mailto:${SITE.email}`}>{SITE.email}</a>。代码与公开项目放在 <a href={SITE.github} target="_blank" rel="noopener noreferrer">GitHub</a>。</p>
+        <p>I study Computer Science at The Chinese University of Hong Kong, Shenzhen. My current research direction centers on machine learning, with optimization, probability, and mathematical foundations as tools for understanding models and algorithms more deeply.</p>
+        <p>I also build systems that make research questions concrete. CUHKSZ MicroWorld is a 3D campus-based agent environment for navigation, time-aware planning, transport decisions, replanning, and reproducible evaluation. Holistic Assistant is a long-running academic planning system that turns curriculum documents, SIS course data, and structured rules into editable plans and grounded guidance.</p>
+        <p>Other engineering work includes read-only market intelligence and cross-device AI-state infrastructure. Across these projects, I care about explicit evidence, reproducibility, failure modes, and keeping model-generated output separate from deterministic system state.</p>
+        <p>For research, projects, or collaboration, email me at <a href={`mailto:${SITE.email}`}>{SITE.email}</a>. Public code and repositories are available on <a href={SITE.github} target="_blank" rel="noopener noreferrer">GitHub</a>.</p>
       </div>
     </div>
   </section>

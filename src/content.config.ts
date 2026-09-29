@@ -27,10 +27,10 @@ const projects = defineCollection({
   schema: z.object({
     title: z.string(),
     englishTitle: z.string(),
-    category: z.enum(['holistic-assistant', 'ai-tools']).default('holistic-assistant'),
+    category: z.enum(['agent-world', 'holistic-assistant', 'ai-tools']).default('holistic-assistant'),
     repositoryVisibility: z.enum(['public', 'private']).default('private'),
     visual: z.enum(['campus', 'pipeline']).default('campus'),
-    technicalTitle: z.string().default('从查课到排课，都接进一份规划。'),
+    technicalTitle: z.string().default('How the system is put together.'),
     engineering: z.array(z.object({ title: z.string(), detail: z.string() })).default([]),
     pipeline: z.array(z.object({ title: z.string(), detail: z.string() })).default([]),
     evidence: z.array(z.object({ label: z.string(), url: z.url() })).default([]),

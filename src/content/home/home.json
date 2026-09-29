@@ -1,6 +1,6 @@
 {
-  "seoTitle": "JasperLou's Journey of CS",
-  "seoDescription": "Jasper Jiarui Lou 的计算机科学、机器学习与 Agent 项目记录，包括全人助手与 CUHKSZ MicroWorld。",
+  "seoTitle": "Jasper Jiarui Lou — CS, Machine Learning & Agent Systems",
+  "seoDescription": "Personal research and engineering portfolio of Jasper Jiarui Lou: machine learning, agent systems, optimization, academic planning, and applied AI infrastructure.",
   "sections": [
     {
       "_template": "hero",
@@ -8,28 +8,28 @@
       "titleFirst": "JasperLou's",
       "titleAccent": "Journey",
       "titleLast": "of CS",
-      "lead": "我在这里记录机器学习、系统实现和科研训练，也记录把想法做成可运行项目的过程。",
-      "aside": "CS student at CUHK-Shenzhen. I am exploring machine learning, optimization and agent systems through research-oriented projects and careful implementation.",
+      "lead": "I document how I learn, build, test, and revise research-oriented software — from machine learning and optimization to agent environments and applied AI systems.",
+      "aside": "CS student at CUHK-Shenzhen. My current research direction centers on machine learning, with optimization, probability, and agent systems as supporting interests.",
       "facts": [
         { "label": "Research focus", "value": "Machine Learning" },
-        { "label": "Building", "value": "Holistic Assistant · CUHKSZ MicroWorld" },
+        { "label": "Current builds", "value": "CUHKSZ MicroWorld · Holistic Assistant" },
         { "label": "Supporting interests", "value": "Optimization · Probability · Agent Systems" }
       ]
     },
     {
       "_template": "featuredProject",
       "eyebrow": "Featured project · 01",
-      "titleFirst": "现在还在做的",
-      "titleLast": "长期项目",
-      "intro": "我在持续迭代全人助手，也在构建 CUHKSZ MicroWorld：把校园空间、时间约束、交通选择与 Agent 行为放进可运行、可记录、可评测的环境里。"
+      "titleFirst": "Long-running systems,",
+      "titleLast": "not one-off demos",
+      "intro": "I keep iterating on Holistic Assistant and CUHKSZ MicroWorld: one turns curriculum evidence into editable academic plans; the other turns a campus world into a spatial, time-aware agent evaluation environment."
     },
     {
       "_template": "latestNotes",
       "eyebrow": "Recent notes",
-      "titleFirst": "从第一版写起，",
-      "titleLast": "也把走过的弯路留下来",
-      "intro": "这些文章按时间留下项目和学习当时的样子；最新进展会优先放在项目专题和公开仓库里。",
-      "linkLabel": "查看全部文章"
+      "titleFirst": "Keep the early versions,",
+      "titleLast": "including the mistakes",
+      "intro": "These notes preserve what a project or idea looked like at the time. For current implementation details, the project pages and repositories take priority.",
+      "linkLabel": "View all notes"
     }
   ]
 }

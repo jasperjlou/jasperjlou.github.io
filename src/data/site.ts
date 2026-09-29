@@ -1,7 +1,7 @@
 export const SITE = {
   title: "JasperLou's Journey of CS",
   shortTitle: 'JasperLou',
-  description: 'Jasper Jiarui Lou 的计算机科学、机器学习与 Agent 项目记录，包括全人助手与 CUHKSZ MicroWorld。',
+  description: 'Jasper Jiarui Lou — computer science, machine learning, agent systems, and research-oriented engineering projects.',
   author: 'Jasper Jiarui Lou',
   email: '125090445@link.cuhk.edu.cn',
   github: 'https://github.com/jasperjlou',
@@ -9,14 +9,14 @@ export const SITE = {
 };
 
 export const NAV_ITEMS = [
-  { href: '/', label: '首页', eyebrow: 'Home' },
-  { href: '/projects/', label: '项目', eyebrow: 'Projects' },
-  { href: '/notes/', label: '文章', eyebrow: 'Notes' },
-  { href: '/about/', label: '关于', eyebrow: 'About' },
+  { href: '/', label: 'Home', eyebrow: 'Home' },
+  { href: '/projects/', label: 'Projects', eyebrow: 'Projects' },
+  { href: '/notes/', label: 'Notes', eyebrow: 'Notes' },
+  { href: '/about/', label: 'About', eyebrow: 'About' },
 ];
 
 export const formatDate = (date: Date) =>
-  new Intl.DateTimeFormat('zh-CN', {
+  new Intl.DateTimeFormat('en-CA', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

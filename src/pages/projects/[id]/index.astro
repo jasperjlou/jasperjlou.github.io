@@ -54,7 +54,7 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft && data.pr
   <section class="project-overview shell">
     <aside class="project-overview__label" data-reveal>
       <p class="eyebrow">Why it exists</p>
-      <span>资料核对于 {formatDate(project.data.lastVerified)}</span>
+      <span>Source/documentation audit: {formatDate(project.data.lastVerified)}</span>
     </aside>
     <div class="project-overview__copy" data-reveal><Content /></div>
   </section>
@@ -76,22 +76,22 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft && data.pr
     </div>
   </section>
 
-  {project.data.engineering.length > 0 && <section class="engineering-section shell" aria-label="技术取舍">
+  {project.data.engineering.length > 0 && <section class="engineering-section shell" aria-label="Engineering decisions">
     <div class="section-heading" data-reveal>
-      <div><p class="eyebrow">Engineering notes</p><h2>具体怎么做</h2></div>
-      <p>这里记下实现方法和选择它的原因。</p>
+      <div><p class="eyebrow">Engineering notes</p><h2>How the system is put together</h2></div>
+      <p>Implementation choices, boundaries, and the reasons behind them.</p>
     </div>
     <dl class="engineering-list">
       {project.data.engineering.map((item) => <div data-reveal><dt>{item.title}</dt><dd>{item.detail}</dd></div>)}
     </dl>
-    {project.data.evidence.length > 0 && <div class="evidence-links"><span>代码与验证</span>{project.data.evidence.map((item) => <a class="text-link" href={item.url} target="_blank" rel="noopener noreferrer">{item.label}</a>)}</div>}
+    {project.data.evidence.length > 0 && <div class="evidence-links"><span>Code & verification</span>{project.data.evidence.map((item) => <a class="text-link" href={item.url} target="_blank" rel="noopener noreferrer">{item.label}</a>)}</div>}
   </section>}
 
   <section class="project-principles">
     <div class="shell project-principles__grid">
       <div data-reveal>
         <p class="eyebrow">Before using it</p>
-        <h2>先看哪些能信，<br />哪些还要确认。</h2>
+        <h2>Know what is verified,<br />and what still needs checking.</h2>
       </div>
       <div data-reveal>
         <ol class="principle-list">
@@ -105,13 +105,13 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft && data.pr
   {posts.length > 0 && <section class="project-timeline">
     <div class="shell">
       <div class="section-heading" data-reveal>
-        <div><p class="eyebrow">Development log</p><h2>从第一版继续写</h2></div>
-        <p>这些文章保留项目当时的样子。我当时怎么想、怎么取舍、哪里做错了，都留在原文里。</p>
+        <div><p class="eyebrow">Development log</p><h2>Earlier versions stay visible</h2></div>
+        <p>These posts preserve how the project looked at the time, including earlier assumptions, design choices, and mistakes. The current project page and repository take priority for present-day implementation details.</p>
       </div>
       <div class="post-list" data-reveal>
         {posts.map((post, index) => <PostCard post={post} index={index} />)}
       </div>
     </div>
   </section>}
-  <div class="shell project-back"><a class="text-link" href={`/projects/#${group.id}`}>回到 {group.title}</a></div>
+  <div class="shell project-back"><a class="text-link" href={`/projects/#${group.id}`}>Back to {group.title}</a></div>
 </BaseLayout>

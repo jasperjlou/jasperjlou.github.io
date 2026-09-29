@@ -9,22 +9,22 @@ import { PROJECT_GROUPS } from '@/data/project-groups';
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 ---
 
-<BaseLayout title="项目" description="全人助手、Market Watchdog 和 AI Sync：我做过的项目、技术实现与开发记录。">
+<BaseLayout title="Projects" description="Research-oriented and engineering projects by Jasper Jiarui Lou: CUHKSZ MicroWorld, Holistic Assistant, Market Watchdog, and AI Sync.">
   <section class="page-hero">
     <div class="shell page-hero__grid">
       <div data-reveal>
         <p class="eyebrow">Projects</p>
-        <h1>我做过的项目</h1>
+        <h1>Systems I build,<br />test, and keep revising</h1>
       </div>
       <aside class="page-hero__aside" data-reveal>
-        <p>有些项目来自选课时遇到的问题，有些是我自己想用的工具。我把为什么做、具体怎么做，以及还没解决的问题放在这里。</p>
+        <p>These projects span agent environments, academic planning, market intelligence, and AI infrastructure. Each page focuses on what the system actually does, how it is structured, what has been verified, and what remains a limitation.</p>
         <a class="text-link" href="https://github.com/jasperjlou" target="_blank" rel="noopener noreferrer">github.com/jasperjlou</a>
       </aside>
     </div>
   </section>
 
-  <nav class="shell project-category-nav" aria-label="项目分类">
-    {PROJECT_GROUPS.map((group) => <a href={`#${group.id}`}>{group.title}<small>{projects.filter((p) => p.data.category === group.id).length} 个项目</small></a>)}
+  <nav class="shell project-category-nav" aria-label="Project categories">
+    {PROJECT_GROUPS.map((group) => <a href={`#${group.id}`}>{group.title}<small>{projects.filter((p) => p.data.category === group.id).length} project(s)</small></a>)}
   </nav>
   <div class="project-index">
     <div class="shell">
@@ -40,7 +40,7 @@ const projects = (await getCollection('projects')).sort((a, b) => a.data.order -
             <div class="status-line" style="margin-top: 24px;">{project.data.status}</div>
             <h3>{project.data.title}<small>{project.data.englishTitle}</small></h3>
             <p>{project.data.summary}</p>
-            <div class="stack-line" aria-label="技术栈">{project.data.stack.slice(0, 5).map((item) => <span>{item}</span>)}</div>
+            <div class="stack-line" aria-label="Technology stack">{project.data.stack.slice(0, 5).map((item) => <span>{item}</span>)}</div>
             <ProjectLinks project={project} />
           </div>
           <div data-reveal>

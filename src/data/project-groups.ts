@@ -1,14 +1,20 @@
 export const PROJECT_GROUPS = [
   {
+    id: 'agent-world',
+    title: 'Agent Worlds',
+    subtitle: 'Interactive environments and evaluation',
+    description: 'Spatial environments where agents must navigate, act under time constraints, recover from mistakes, and leave reproducible trajectories that can be independently evaluated.',
+  },
+  {
     id: 'holistic-assistant',
     title: 'Holistic Assistant',
-    subtitle: '学业规划与课程数据',
-    description: '全人助手是我一直在做的学业规划项目。这里放它的系统设计，也留下每一版的开发记录。',
+    subtitle: 'Curriculum-aware academic planning',
+    description: 'A long-running academic planning system that turns official curriculum material, SIS course data, and structured rules into editable plans and grounded guidance.',
   },
   {
     id: 'ai-tools',
     title: 'AI + Tools',
-    subtitle: '多领域融合与工具实践',
-    description: '还有一些工具是为了解决我自己遇到的问题：怎么持续整理金融信息，怎么在换电脑后继续使用自己的 AI 工作环境。',
+    subtitle: 'Applied AI infrastructure and decision-support systems',
+    description: 'Engineering projects built around evidence, state, reproducibility, safety boundaries, and practical workflows rather than one-shot model output.',
   },
 ] as const;

@@ -1,76 +1,90 @@
 ---
-title: 全人助手开发
-englishTitle: Holistic Assistant
+title: Holistic Assistant
+englishTitle: CUHK-Shenzhen Academic Planning System
 category: holistic-assistant
 repositoryVisibility: private
 visual: campus
-technicalTitle: 把学校文件里的规则，写进可以检查的规划。
-order: 1
-status: 公共预览 · 持续开发
-statusDetail: 课程索引、培养方案和规划工具已经上线。AI 功能是否可用，以在线版本当时的运行状态为准。
-description: 全人助手是香港中文大学（深圳）学生使用的学业规划系统。它整理培养方案、SIS 课程信息和全校规则，帮助学生查课、排课和检查毕业要求。
-summary: 我把培养方案 PDF、SIS 课程信息和先修关系整理到一起，再做成可以修改的四年规划。这里面反复要解决的问题，是怎么保留学校文件里的课程顺序、选修课位和选择组。
+technicalTitle: Keep curriculum structure explicit, then let AI explain around it.
+order: 2
+status: Private source · Public service · Active
+statusDetail: The current repository separates structured course and curriculum logic from model-generated text, prebuilds layered course indexes, and exposes health/data diagnostics for deployment. Source remains private because the full project includes deployment and working data context.
+description: A curriculum-aware academic planning system that combines official university documents, SIS-derived course data, structured graduation rules, editable roadmaps, prerequisite checks, and bounded AI assistance.
+summary: Holistic Assistant began as a PDF question-answering prototype and evolved into a planning system where curriculum structure, programme tracks, course data, and editable roadmaps are represented explicitly instead of being left for a model to reconstruct from prose.
 liveUrl: https://holisticassistant.com/
 githubUrl: https://github.com/jasperjlou/holistic-assistant
-launched: "2025.10"
-lastVerified: 2026-08-09
+launched: "2025.10 · ongoing"
+lastVerified: 2026-09-29
 heroImage: /assets/campus/academic-courtyard.webp
-heroAlt: 香港中文大学（深圳）学术中庭与连桥
+heroAlt: CUHK-Shenzhen academic courtyard and elevated walkways
 metrics:
-  - value: "1,585"
-    label: 课程索引
-    note: 其中 1,583 条通过当前有效性检查
-  - value: "37"
-    label: 专业方案
-    note: 覆盖当前可识别的本科专业路径
-  - value: "732"
-    label: 先修关系
-    note: 用于路线图顺序与风险检查
-  - value: "38"
-    label: 官方 PDF
-    note: 含培养方案与全校修读规则
+  - value: "19,959 / 19,959"
+    label: evaluation checks passed
+    note: Stored output-quality evaluation snapshot generated 2026-05-27.
+  - value: "75"
+    label: roadmap variants
+    note: Stored output-quality evaluation snapshot generated 2026-05-27.
+  - value: "0"
+    label: failures
+    note: In the 2026-05-27 stored evaluation snapshot.
+  - value: "0"
+    label: warnings
+    note: In the 2026-05-27 stored evaluation snapshot.
+pipeline:
+  - title: Official curriculum evidence
+    detail: Curriculum PDFs · university-wide rules · SIS-derived course data
+  - title: Structured academic context
+    detail: Layered indexes · programme tracks · course groups · prerequisite context
+  - title: Planning and retrieval
+    detail: Roadmap engine · PDF knowledge layer · curated resources
+  - title: Bounded model synthesis
+    detail: Fast/reasoning model routing · explicit fallback · evidence-aware answers
+  - title: Editable student output
+    detail: Course guidance · multi-year roadmaps · re-checkable plans
 features:
   - index: "01"
-    title: 聊天规划
-    description: 聊天时会同时查看课程、培养方案和转学分材料。资料不够时会说明还缺什么，不替学校规则补答案。
+    title: Curriculum-aware consultation
+    description: Answers can combine course metadata, programme requirements, university-wide rules, and official-document context instead of relying on model memory alone.
   - index: "02"
-    title: 规划蓝图
-    description: 把四年的课程排到各个学期。课程可以拖动，选修位可以修改，调整后再检查先修关系。
+    title: Editable multi-year roadmaps
+    description: The planner distinguishes fixed requirements, elective slots, grouped choices, and programme tracks so a plan remains editable without erasing the structure that produced it.
   - index: "03"
-    title: 课程资源
-    description: 在本地资料库里找课程材料。搜索结果用来补充线索，正式结论仍回到课程和学校文件。
+    title: Prerequisite and sequencing checks
+    description: Course-context and roadmap logic are separated from the interface, making ordering constraints and programme-specific structures explicit and testable.
   - index: "04"
-    title: 学业轨迹
-    description: 把长期目标、每学期的课程和每周时间放到同一页，方便随时调整。
+    title: Layered data loading
+    description: Docker builds precompute course indexes; runtime workers load those caches while the PDF knowledge layer is lazy-loaded for document-grounded questions.
   - index: "05"
-    title: 身份档案
-    description: 按专业、入学年份和学生身份匹配培养方案与全校要求。
+    title: Resource discovery
+    description: Curated learning resources can be supplemented by optional web search without replacing the local curriculum and course indexes used for academic-rule claims.
   - index: "06"
-    title: 选课推荐
-    description: 查看课程组合、开课规律和个人目标，给出选课建议；建议发出后仍由学生确认。
-principles:
-  - 先看学校文件，再看模型生成的内容
-  - 数据、推断和学生自己填写的信息分开显示
-  - 每份规划都能修改，也会保留检查结果
+    title: Runtime diagnostics
+    description: Separate health, diagnostics, and data-status endpoints make service availability distinguishable from curriculum/index correctness.
 engineering:
-  - title: PDF 和 SIS 怎么对上
-    detail: PDF 描述培养方案的结构，SIS 提供每门课的具体信息。我按课程代码和专业方案组织分层 JSON 索引，再为检索和路线图生成准备上下文，避免只拿到零散的课程片段。
-  - title: 选修课位不能随便补成一门课
-    detail: 路线图解析会区分固定课程、选修课位和多选一课程组。校验逻辑检查学期位置、课程标题和专业方向，前端也保留这些结构，方便学生继续修改。
-  - title: 服务启动时不用重新读完所有材料
-    detail: Docker 构建时预先生成课程索引，运行时使用缓存；PDF 知识库按需加载，并通过线程锁处理并发访问。健康检查单独返回服务状态，不触发 PDF 解析。
-  - title: 把容易出错的情况留在测试里
-    detail: 仓库中保留培养方案正确性、课程上下文、接口降级和路线图拖动等测试。已有测试可以帮助检查修改后的行为，实际检索效果还需要用固定问题集继续评估。
+  - title: Do not ask a model to reconstruct the curriculum from scratch
+    detail: Programme structure is represented in course indexes, graduation-rule caches, roadmap objects, and explicit context assembly. The model works around that structure rather than silently defining it.
+  - title: Keep elective structure visible
+    detail: Fixed courses, elective slots, streams, and multi-choice groups remain separate entities so a generated roadmap can be edited and validated without turning every open choice into a fabricated course assignment.
+  - title: Make startup independent from a full corpus rescan
+    detail: Layered indexes are built ahead of runtime. The service can report health without forcing PDF parsing, while document retrieval loads its knowledge layer when needed.
+  - title: Treat model routing as configuration, not academic truth
+    detail: The current source defaults to gemini-3.5-flash for fast requests, gemini-2.5-pro for reasoning, and gemini-embedding-2 for embeddings; bounded fallback behavior is covered by repository tests.
+principles:
+  - Official documents and structured course data take priority over model prose.
+  - Missing academic evidence should remain missing instead of being filled by confident guesses.
+  - Generated plans should remain editable and re-checkable.
+  - Historical evaluation numbers describe their stored run and are not silently promoted into claims about every later deployment.
 stack:
   - Flask
   - Gemini API
-  - Playwright
   - Hybrid retrieval
   - Layered JSON indexes
   - Vanilla JavaScript
   - Docker
+  - Gunicorn
+  - pytest
+evidence: []
 ---
 
-全人助手从一个很简单的问题开始：能不能让模型读懂培养方案 PDF？后来我加入了 SIS 课程索引、全校毕业规则、先修关系图和可编辑路线图。现在学生可以在同一个地方查课程、看要求、调整自己的四年规划。
+Holistic Assistant started with a simple question: could a model answer useful questions from curriculum PDFs? The harder problem turned out to be everything around that question — course catalogues, programme tracks, prerequisite relationships, university-wide rules, editable semester plans, deployment, and making sure generated language did not quietly replace the underlying academic structure.
 
-我会继续在这里更新数据、规则、界面和部署情况。下面的文章保留每个阶段当时的做法；最新数据以页面上的核验日期为准。
+The current architecture therefore treats structured curriculum data as the backbone of the system. Model calls are useful for interpretation and synthesis, but they sit on top of explicit course and planning state. A historical output-quality evaluation in the repository recorded 19,959 checks with no failures or warnings across that evaluation snapshot; I keep that result tied to its date rather than treating it as a permanent score for every later version.

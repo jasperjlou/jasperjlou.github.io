@@ -3,15 +3,13 @@ import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 
-// Only the ephemeral CI checkout is written; deployed content is never touched.
+// All content changes happen in a disposable checkout, never in Tina Cloud.
 const { chromium } = await import(pathToFileURL(`${process.env.RUNNER_TEMP}/tina-browser/node_modules/playwright/index.mjs`).href);
 const contentPath = 'src/content/home/home.json';
 const originalBytes = fs.readFileSync(contentPath);
 const original = JSON.parse(originalBytes);
-const results = [];
-const errors = [];
-let child;
-let phase = 'starting';
+const results = [], errors = [];
+let child, page, phase = 'starting';
 const browser = await chromium.launch({ headless: true });
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 function begin(name) { phase = name; console.log(`ACCEPTANCE: ${name}`); }
@@ -27,7 +25,6 @@ async function start(args, log, env = {}) {
 async function stop() {
   if (child) { try { process.kill(-child.pid, 'SIGTERM'); } catch {} child = undefined; await wait(1500); }
 }
-let page;
 try {
   begin('built site');
   await start(['run', 'preview'], 'evidence/preview.log', { HOST: '0.0.0.0', PORT: '4321' });
@@ -94,17 +91,22 @@ try {
   await page.locator('input[name="seoTitle"]').waitFor({ state: 'visible' });
 
   begin('media library');
-  await page.getByRole('button').first().click();
-  await wait(500);
+  // The first role=button is a disabled form action, not the menu. The inspected
+  // 1440px desktop layout places the visible navigation icon at (32,36).
+  // Assert the resulting navigation state rather than assuming a hash route.
+  await page.mouse.click(32, 36);
+  await wait(700);
   fs.writeFileSync('evidence/navigation.txt', await page.locator('body').innerText());
-  const media = page.getByText('Media', { exact: true }).first();
+  fs.writeFileSync('evidence/navigation-controls.json', JSON.stringify(await page.locator('button,a,[role="button"]').evaluateAll(nodes => nodes.map(node => ({ text: node.textContent, label: node.getAttribute('aria-label'), href: node.getAttribute('href') }))), null, 2));
+  await page.screenshot({ path: 'evidence/navigation.png', fullPage: true });
+  const media = page.getByText(/^(Media|媒体|媒体库)$/, { exact: true }).first();
   await media.waitFor({ state: 'visible', timeout: 10000 });
   await media.click();
   await wait(2000);
   const mediaText = await page.locator('body').innerText();
   fs.writeFileSync('evidence/media.txt', mediaText);
   await page.screenshot({ path: 'evidence/media.png', fullPage: true });
-  assert.ok(/media/i.test(mediaText) && /upload|files|folder|assets/i.test(mediaText), 'Media library did not render');
+  assert.ok(/media|媒体/i.test(mediaText) && /upload|files|folder|assets|上传/i.test(mediaText), 'Media library did not render');
   results.push({ test: 'local media library navigation and listing (no upload)', status: 'passed' });
   assert.deepEqual(errors, [], 'Unexpected page errors');
 } catch (error) {

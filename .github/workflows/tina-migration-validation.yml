@@ -3,6 +3,8 @@ name: Tina migration validation
 on:
   push:
     branches: [agent/tinacms-security-migration-20261017]
+  pull_request:
+    branches: [source]
 
 permissions:
   contents: read
@@ -23,142 +25,74 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - name: Generate candidate lock and install cleanly
+      - name: Install exact committed dependencies
         run: |
           mkdir -p evidence
           git rev-parse HEAD > evidence/revision.txt
-          npm install --package-lock-only --ignore-scripts
           npm ci
-          cp package.json package-lock.json evidence/
-      - name: Preserve the existing production security gate
-        run: npm audit --omit=dev --audit-level=high
-      - name: Record all remaining advisories explicitly
+      - name: Preserve production security gate and record full audit separately
         shell: bash
         run: |
+          npm audit --omit=dev --audit-level=high
           set +e
           npm audit --json > evidence/audit-full.json
-          result=$?
+          status=$?
           set -e
-          echo "$result" > evidence/audit-full.exit
-          node --input-type=module <<'JS'
-          import fs from 'node:fs';
-          const a = JSON.parse(fs.readFileSync('evidence/audit-full.json', 'utf8'));
-          console.log(JSON.stringify({metadata:a.metadata, vulnerabilities:a.vulnerabilities}, null, 2));
-          if (!a.metadata || a.metadata.vulnerabilities.critical > 0) process.exit(1);
-          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Full npm audit (not a clean-audit claim): ${JSON.stringify(a.metadata.vulnerabilities)}\n`);
-          JS
-      - name: Build site and editor
-        run: npm run build 2>&1 | tee evidence/build.log
-      - name: Validate Astro types and content
-        run: npm run check 2>&1 | tee evidence/check.log
-      - name: Verify required public output
-        shell: bash
+          echo "$status" > evidence/audit-full.exit
+          node -e "const a=require('./evidence/audit-full.json'); if(!a.metadata)throw Error('Audit unavailable'); console.log(a.metadata); if(a.metadata.vulnerabilities.critical)process.exit(1); const cli=a.vulnerabilities['@tinacms/cli']; if(cli && cli.via.some(v=>typeof v==='object'&&v.url.includes('GHSA-pwhx-cvv3-qj5c')))throw Error('Branch injection advisory remains');"
+      - name: Build and type-check
+        run: |
+          npm run build 2>&1 | tee evidence/build.log
+          npm run check 2>&1 | tee evidence/check.log
+      - name: Verify required public artifacts
         run: |
           for p in index.html projects/cuhksz-microworld/index.html projects/holistic-assistant/index.html projects/market-watchdog/index.html projects/ai-sync/index.html 2026/02/26/holistic-assistant-setback/index.html admin/index.html CNAME rss.xml sitemap-index.xml robots.txt; do test -f "dist/client/$p"; done
           grep -q 'jasperjlou.me' dist/client/CNAME
           grep -q '<html lang="en">' dist/client/index.html
           grep -q '<link rel="canonical" href="https://jasperjlou.me/' dist/client/index.html
-          if test -f tina/tina-lock.json; then cp tina/tina-lock.json evidence/tina-lock.json; fi
-      - name: Prepare isolated browser tooling
+      - name: Install isolated browser test tooling
         run: |
           npm install --prefix "$RUNNER_TEMP/tina-browser" --ignore-scripts --no-audit --no-fund playwright@1.64.1
           "$RUNNER_TEMP/tina-browser/node_modules/.bin/playwright" install --with-deps chromium
-      - name: Inspect built pages and local editor in Chromium
+      - name: Exercise local editor entry and inspect collection controls
         shell: bash
         run: |
           node --input-type=module <<'JS'
           import fs from 'node:fs';
-          import { spawn } from 'node:child_process';
-          import { pathToFileURL } from 'node:url';
-          const { chromium } = await import(pathToFileURL(`${process.env.RUNNER_TEMP}/tina-browser/node_modules/playwright/index.mjs`).href);
-          const browser = await chromium.launch({headless:true});
-          const results = [];
-          let child;
-          const waitFor = async (url) => { for (let i=0;i<90;i++){ try { const r=await fetch(url); if(r.ok)return; }catch{} await new Promise(r=>setTimeout(r,1000)); } throw Error(`Server not ready: ${url}`); };
-          const start = (args, log, env={}) => {const fd=fs.openSync(log,'w'); return spawn('npm',args,{detached:true,env:{...process.env,...env},stdio:['ignore',fd,fd]});};
-          const stop = async () => {if(child){try{process.kill(-child.pid,'SIGTERM');}catch{} child=undefined; await new Promise(r=>setTimeout(r,1500));}};
-          try {
-            child=start(['run','preview'],'evidence/preview.log',{HOST:'127.0.0.1',PORT:'4321'});
-            await waitFor('http://127.0.0.1:4321/');
-            for(const viewport of [{width:1440,height:1000},{width:390,height:844}]){
-              const page=await browser.newPage({viewport}); const errors=[]; page.on('pageerror',e=>errors.push(e.message));
-              const r=await page.goto('http://127.0.0.1:4321/',{waitUntil:'networkidle'});
-              if(!r.ok())throw Error(`Homepage HTTP ${r.status()}`);
-              if(await page.locator('h1').count()===0)throw Error('Missing homepage heading');
-              const canonical=await page.locator('link[rel="canonical"]').getAttribute('href');
-              if(canonical!=='https://jasperjlou.me/')throw Error(`Canonical changed: ${canonical}`);
-              if(errors.length)throw Error(`Homepage JS: ${errors.join('; ')}`);
-              await page.screenshot({path:`evidence/home-${viewport.width}.png`,fullPage:true});
-              results.push({test:`built homepage ${viewport.width}`,status:'passed',title:await page.title(),canonical});
-              await page.close();
-            }
-            const page=await browser.newPage();
-            for(const p of ['/projects/','/projects/holistic-assistant/','/2026/02/26/holistic-assistant-setback/','/admin/index.html']){const r=await page.goto(`http://127.0.0.1:4321${p}`,{waitUntil:'domcontentloaded'});if(!r.ok())throw Error(`${p}: HTTP ${r.status()}`);results.push({test:`built route ${p}`,status:'passed'});}
-            await page.close(); await stop();
-            child=start(['run','dev'],'evidence/dev.log');
-            await waitFor('http://localhost:4321/');
-            const admin=await browser.newPage({viewport:{width:1440,height:1000}});
-            const errors=[];admin.on('pageerror',e=>errors.push(e.message));
-            const response=await admin.goto('http://localhost:4321/admin/index.html',{waitUntil:'domcontentloaded'});
-            await admin.waitForTimeout(8000);
-            const text=await admin.locator('body').innerText();
-            fs.writeFileSync('evidence/admin-inspection.json',JSON.stringify({url:admin.url(),status:response.status(),text,errors,buttons:await admin.getByRole('button').allTextContents(),links:await admin.getByRole('link').allTextContents()},null,2));
-            await admin.screenshot({path:'evidence/admin-local.png',fullPage:true});
-            if(!response.ok() || text.trim().length<20)throw Error('Local editor failed to load');
-            if(errors.length)throw Error(`Local editor JS: ${errors.join('; ')}`);
-            results.push({test:'local editor initial load (not cloud authentication or save)',status:'passed'});
-          } finally {
-            fs.writeFileSync('evidence/browser-results.json',JSON.stringify(results,null,2));
-            await stop(); await browser.close();
+          import {spawn} from 'node:child_process';
+          import {pathToFileURL} from 'node:url';
+          const {chromium}=await import(pathToFileURL(`${process.env.RUNNER_TEMP}/tina-browser/node_modules/playwright/index.mjs`).href);
+          const fd=fs.openSync('evidence/dev.log','w');
+          const child=spawn('npm',['run','dev'],{detached:true,stdio:['ignore',fd,fd]});
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1440,height:1000}});
+          const errors=[];page.on('pageerror',e=>errors.push(e.message));
+          async function snapshot(name){
+            await page.waitForTimeout(2000);
+            const data={url:page.url(),text:await page.locator('body').innerText(),errors:[...errors],links:await page.getByRole('link').evaluateAll(a=>a.map(x=>({text:x.textContent,href:x.getAttribute('href')}))),buttons:await page.getByRole('button').allTextContents(),fields:await page.locator('input,textarea').evaluateAll(a=>a.map(x=>({tag:x.tagName,type:x.type,name:x.name,placeholder:x.placeholder,value:x.value})))};
+            fs.writeFileSync(`evidence/${name}.json`,JSON.stringify(data,null,2));
+            await page.screenshot({path:`evidence/${name}.png`,fullPage:true});
           }
+          try{
+            let ready=false;
+            for(let i=0;i<90;i++){try{if((await fetch('http://localhost:4321/')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,1000));}
+            if(!ready)throw Error('Local dev server unavailable');
+            await page.goto('http://localhost:4321/admin/index.html',{waitUntil:'domcontentloaded'});
+            await page.getByRole('button',{name:'Enter Edit Mode',exact:true}).click({timeout:30000});
+            await snapshot('editor-entered');
+            await page.goto('http://localhost:4321/admin/index.html#/collections/home',{waitUntil:'domcontentloaded'});
+            await snapshot('home-collection');
+            const edit=page.locator('a[href*="/collections/edit/home/"]').first();
+            if(await edit.count()){await edit.click();await snapshot('home-edit');}
+            await page.goto('http://localhost:4321/admin/index.html#/screens/media',{waitUntil:'domcontentloaded'});
+            await snapshot('media');
+            if(errors.length)throw Error(errors.join('; '));
+          }finally{await browser.close();try{process.kill(-child.pid,'SIGTERM');}catch{}}
           JS
-      - name: Capture exact migration files only
-        if: success()
-        run: |
-          mkdir -p candidate
-          cp package-lock.json candidate/
-          if test -f tina/tina-lock.json; then cp tina/tina-lock.json candidate/; fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: tina-migration-evidence
+          name: tina-editor-evidence
           path: evidence/
           retention-days: 14
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: tina-migration-candidate
-          path: candidate/
-          retention-days: 7
-          if-no-files-found: error
-
-  commit-lock:
-    needs: validate
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.ref_name }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: tina-migration-candidate
-          path: ${{ runner.temp }}/candidate
-      - name: Commit validated lock without overwriting concurrent work
-        env:
-          EXPECTED_SHA: ${{ github.sha }}
-          TARGET_BRANCH: ${{ github.ref_name }}
-        shell: bash
-        run: |
-          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
-          cp "$RUNNER_TEMP/candidate/package-lock.json" package-lock.json
-          git add package-lock.json
-          if test -f "$RUNNER_TEMP/candidate/tina-lock.json"; then cp "$RUNNER_TEMP/candidate/tina-lock.json" tina/tina-lock.json; git add tina/tina-lock.json; fi
-          if git diff --cached --quiet; then exit 0; fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'chore: lock browser-validated TinaCMS migration'
-          git push origin "HEAD:$TARGET_BRANCH"

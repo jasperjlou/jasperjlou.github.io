@@ -1,0 +1,63 @@
+name: Tina migration validation
+
+on:
+  push:
+    branches: [agent/tinacms-security-migration-20261017]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tina-migration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Record registry metadata and tracked source
+        shell: bash
+        run: |
+          mkdir -p evidence
+          node --input-type=module <<'JS' | tee evidence/registry.json
+          const names = ['tinacms', '@tinacms/cli', '@tinacms/astro', '@tinacms/graphql', '@playwright/test', 'playwright'];
+          const result = {};
+          for (const name of names) {
+            const response = await fetch(`https://registry.npmjs.org/${encodeURIComponent(name)}`);
+            if (!response.ok) throw new Error(`${name}: ${response.status}`);
+            const data = await response.json();
+            const version = data['dist-tags'].latest;
+            const item = data.versions[version];
+            result[name] = {version, tags: data['dist-tags'], published: data.time[version], dependencies: item.dependencies, peerDependencies: item.peerDependencies, engines: item.engines};
+          }
+          console.log(JSON.stringify(result, null, 2));
+          JS
+          git rev-parse HEAD > evidence/revision.txt
+          cp package.json package-lock.json evidence/
+          git archive --format=zip --output=evidence/source.zip HEAD AGENTS.md astro.config.mjs tina src .github/workflows
+      - name: Install baseline without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Record full audit without hiding its exit status
+        shell: bash
+        run: |
+          set +e
+          npm audit --json > evidence/audit-baseline.json
+          audit_status=$?
+          set -e
+          echo "$audit_status" > evidence/audit-baseline.exit
+          node --input-type=module -e "import fs from 'node:fs'; const a=JSON.parse(fs.readFileSync('evidence/audit-baseline.json','utf8')); console.log(JSON.stringify({auditExit: Number(fs.readFileSync('evidence/audit-baseline.exit','utf8')), metadata:a.metadata, findings:Object.fromEntries(Object.entries(a.vulnerabilities||{}).map(([k,v])=>[k,{severity:v.severity,range:v.range,fixAvailable:v.fixAvailable,via:v.via}]))},null,2)); if(!a.metadata) process.exit(1);"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tina-migration-baseline
+          path: evidence/
+          retention-days: 14
+          if-no-files-found: error

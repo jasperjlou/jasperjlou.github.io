@@ -1,0 +1,119 @@
+name: Isolated dependency repair
+
+on:
+  push:
+    branches:
+      - repair/site-audit-20261016
+    paths:
+      - .github/workflows/repair-dependencies.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: isolated-site-dependency-repair
+  cancel-in-progress: false
+
+jobs:
+  validate-repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Resolve compatible production dependency fixes
+        shell: bash
+        run: |
+          set +e
+          npm audit fix --package-lock-only --ignore-scripts --omit=dev > "$RUNNER_TEMP/audit-fix.log" 2>&1
+          result=$?
+          set -e
+          cat "$RUNNER_TEMP/audit-fix.log"
+          if [ "$result" -ne 0 ] && [ "$result" -ne 1 ]; then
+            exit "$result"
+          fi
+          git diff --exit-code -- package.json
+      - name: Install exact repaired dependency tree
+        run: npm ci
+      - name: Enforce existing production security gate
+        run: npm audit --omit=dev --audit-level=high
+      - name: Build site and TinaCMS editor
+        run: npm run build
+      - name: Validate content and types
+        run: npm run check
+      - name: Verify required output
+        shell: bash
+        run: |
+          test -f dist/client/index.html
+          test -f dist/client/projects/cuhksz-microworld/index.html
+          test -f dist/client/projects/holistic-assistant/index.html
+          test -f dist/client/projects/market-watchdog/index.html
+          test -f dist/client/projects/ai-sync/index.html
+          test -f dist/client/2026/02/26/holistic-assistant-setback/index.html
+          test -f dist/client/admin/index.html
+          test -f dist/client/CNAME
+          test -f dist/client/rss.xml
+          test -f dist/client/sitemap-index.xml
+          grep -q 'jasperjlou.me' dist/client/CNAME
+          grep -q '<html lang="en">' dist/client/index.html
+          grep -q '<link rel="canonical" href="https://jasperjlou.me/' dist/client/index.html
+          git diff --check
+          git diff --exit-code -- package.json
+      - name: Record full dependency audit
+        if: always()
+        shell: bash
+        run: |
+          npm audit --json > "$RUNNER_TEMP/audit-full.json" || true
+          git diff --stat > "$RUNNER_TEMP/repair-diff-stat.txt"
+      - name: Save repair evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-dependency-repair
+          path: |
+            package-lock.json
+            ${{ runner.temp }}/audit-fix.log
+            ${{ runner.temp }}/audit-full.json
+            ${{ runner.temp }}/repair-diff-stat.txt
+          retention-days: 7
+
+  publish-validated-lockfile:
+    needs: validate-repair
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Reject a concurrently changed repair branch
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - uses: actions/download-artifact@v4
+        with:
+          name: site-dependency-repair
+          path: repair-artifact
+      - name: Commit only the validated lockfile to the repair branch
+        shell: bash
+        run: |
+          lockfile=$(find repair-artifact -type f -name package-lock.json)
+          test -n "$lockfile"
+          test "$(printf '%s\n' "$lockfile" | wc -l)" -eq 1
+          cp "$lockfile" package-lock.json
+          git diff --check
+          git add -- package-lock.json
+          if git diff --cached --quiet; then
+            echo 'No compatible lockfile changes were produced.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(deps): remediate production audit failures within existing version ranges'
+          git push origin "HEAD:${GITHUB_REF_NAME}"

@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 
-// All writes are to an ephemeral CI checkout, never Tina Cloud or deployed content.
+// Only the ephemeral CI checkout is written; deployed content is never touched.
 const { chromium } = await import(pathToFileURL(`${process.env.RUNNER_TEMP}/tina-browser/node_modules/playwright/index.mjs`).href);
 const contentPath = 'src/content/home/home.json';
 const originalBytes = fs.readFileSync(contentPath);
@@ -11,8 +11,10 @@ const original = JSON.parse(originalBytes);
 const results = [];
 const errors = [];
 let child;
+let phase = 'starting';
 const browser = await chromium.launch({ headless: true });
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+function begin(name) { phase = name; console.log(`ACCEPTANCE: ${name}`); }
 async function waitUntil(check, message, attempts = 60) {
   for (let i = 0; i < attempts; i++) { if (await check()) return; await wait(500); }
   throw new Error(message);
@@ -27,9 +29,12 @@ async function stop() {
 }
 let page;
 try {
+  begin('built site');
   await start(['run', 'preview'], 'evidence/preview.log', { HOST: '0.0.0.0', PORT: '4321' });
   for (const width of [1440, 390]) {
     const publicPage = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
+    publicPage.setDefaultTimeout(20000);
+    publicPage.setDefaultNavigationTimeout(30000);
     publicPage.on('pageerror', error => errors.push(error.message));
     const response = await publicPage.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
     assert.ok(response.ok());
@@ -45,29 +50,37 @@ try {
     await publicPage.close();
   }
   await stop();
+  begin('editor entry');
   await start(['run', 'dev'], 'evidence/dev.log');
   page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  page.setDefaultTimeout(20000);
+  page.setDefaultNavigationTimeout(30000);
+  page.on('dialog', dialog => dialog.accept());
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('http://localhost:4321/admin/index.html', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: 'Enter Edit Mode', exact: true }).click({ timeout: 30000 });
+  await page.getByRole('button', { name: 'Enter Edit Mode', exact: true }).click();
   const title = page.locator('input[name="seoTitle"]');
   await title.waitFor({ state: 'visible' });
   assert.equal(await title.inputValue(), original.seoTitle);
   results.push({ test: 'local edit-mode entry and populated home form', status: 'passed' });
 
+  begin('save round-trip');
   const marker = `${original.seoTitle} [CI round-trip]`;
   await title.fill(marker);
+  await title.blur();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await waitUntil(() => JSON.parse(fs.readFileSync(contentPath)).seoTitle === marker, 'Save did not reach the local filesystem');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await title.waitFor({ state: 'visible' });
   assert.equal(await title.inputValue(), marker);
   await title.fill(original.seoTitle);
+  await title.blur();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await waitUntil(() => JSON.parse(fs.readFileSync(contentPath)).seoTitle === original.seoTitle, 'Restoring the original value failed');
   results.push({ test: 'edit, save, reload and restore local content', status: 'passed' });
   await page.screenshot({ path: 'evidence/editor-saved.png', fullPage: true });
 
+  begin('live preview');
   await page.getByRole('button', { name: '首页开场', exact: true }).click();
   const heading = page.locator('input[name$=".titleFirst"]').first();
   await heading.waitFor({ state: 'visible' });
@@ -80,7 +93,7 @@ try {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.locator('input[name="seoTitle"]').waitFor({ state: 'visible' });
 
-  // Use the actual navigation control, not an assumed hash route.
+  begin('media library');
   await page.getByRole('button').first().click();
   await wait(500);
   fs.writeFileSync('evidence/navigation.txt', await page.locator('body').innerText());
@@ -96,7 +109,7 @@ try {
   assert.deepEqual(errors, [], 'Unexpected page errors');
 } catch (error) {
   if (page) {
-    fs.writeFileSync('evidence/failure-dom.json', JSON.stringify({ url: page.url(), text: await page.locator('body').innerText(), fields: await page.locator('input,textarea').evaluateAll(nodes => nodes.map(node => ({ name: node.name, type: node.type, value: node.value }))), errors }, null, 2));
+    fs.writeFileSync('evidence/failure-dom.json', JSON.stringify({ phase, url: page.url(), text: await page.locator('body').innerText(), fields: await page.locator('input,textarea').evaluateAll(nodes => nodes.map(node => ({ name: node.name, type: node.type, value: node.value }))), errors }, null, 2));
     await page.screenshot({ path: 'evidence/failure.png', fullPage: true });
   }
   throw error;

@@ -7,6 +7,15 @@ updates:
     open-pull-requests-limit: 10
     groups:
       npm-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+      # Fix shared audit failures together; major migrations remain separate.
+      npm-security-minor-patch:
+        applies-to: security-updates
+        patterns:
+          - "*"
         update-types:
           - minor
           - patch

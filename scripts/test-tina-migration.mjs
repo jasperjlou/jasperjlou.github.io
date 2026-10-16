@@ -91,17 +91,10 @@ try {
   await page.locator('input[name="seoTitle"]').waitFor({ state: 'visible' });
 
   begin('media library');
-  // The first role=button is a disabled form action, not the menu. The inspected
-  // 1440px desktop layout places the visible navigation icon at (32,36).
-  // Assert the resulting navigation state rather than assuming a hash route.
-  await page.mouse.click(32, 36);
-  await wait(700);
-  fs.writeFileSync('evidence/navigation.txt', await page.locator('body').innerText());
-  fs.writeFileSync('evidence/navigation-controls.json', JSON.stringify(await page.locator('button,a,[role="button"]').evaluateAll(nodes => nodes.map(node => ({ text: node.textContent, label: node.getAttribute('aria-label'), href: node.getAttribute('href') }))), null, 2));
-  await page.screenshot({ path: 'evidence/navigation.png', fullPage: true });
-  const media = page.getByText(/^(Media|媒体|媒体库)$/, { exact: true }).first();
-  await media.waitFor({ state: 'visible', timeout: 10000 });
-  await media.click();
+  // These accessible names were read from the live editor DOM. Avoid positional
+  // selectors: a disabled form control can precede the visible navigation icon.
+  await page.getByLabel('Open navigation menu', { exact: true }).click();
+  await page.getByText('Media Manager', { exact: true }).click();
   await wait(2000);
   const mediaText = await page.locator('body').innerText();
   fs.writeFileSync('evidence/media.txt', mediaText);

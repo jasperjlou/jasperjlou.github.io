@@ -30,7 +30,7 @@ jobs:
           mkdir -p evidence
           git rev-parse HEAD > evidence/revision.txt
           npm ci
-      - name: Preserve production security gate and record full audit separately
+      - name: Preserve production gate and record outstanding full-tree advisories
         shell: bash
         run: |
           npm audit --omit=dev --audit-level=high
@@ -39,7 +39,16 @@ jobs:
           status=$?
           set -e
           echo "$status" > evidence/audit-full.exit
-          node -e "const a=require('./evidence/audit-full.json'); if(!a.metadata)throw Error('Audit unavailable'); console.log(a.metadata); if(a.metadata.vulnerabilities.critical)process.exit(1); const cli=a.vulnerabilities['@tinacms/cli']; if(cli && cli.via.some(v=>typeof v==='object'&&v.url.includes('GHSA-pwhx-cvv3-qj5c')))throw Error('Branch injection advisory remains');"
+          node <<'JS'
+          const fs = require('node:fs');
+          const a = require('./evidence/audit-full.json');
+          if (!a.metadata) throw Error('Audit unavailable');
+          console.log(a.metadata);
+          if (a.metadata.vulnerabilities.critical) process.exit(1);
+          const cli = a.vulnerabilities['@tinacms/cli'];
+          if (cli && cli.via.some(v => typeof v === 'object' && v.url.includes('GHSA-pwhx-cvv3-qj5c'))) throw Error('Branch injection advisory remains');
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Full audit is not clean; remaining findings are tracked in #31: ${JSON.stringify(a.metadata.vulnerabilities)}\n`);
+          JS
       - name: Build and type-check
         run: |
           npm run build 2>&1 | tee evidence/build.log
@@ -54,41 +63,11 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/tina-browser" --ignore-scripts --no-audit --no-fund playwright@1.64.1
           "$RUNNER_TEMP/tina-browser/node_modules/.bin/playwright" install --with-deps chromium
-      - name: Exercise local editor entry and inspect collection controls
-        shell: bash
-        run: |
-          node --input-type=module <<'JS'
-          import fs from 'node:fs';
-          import {spawn} from 'node:child_process';
-          import {pathToFileURL} from 'node:url';
-          const {chromium}=await import(pathToFileURL(`${process.env.RUNNER_TEMP}/tina-browser/node_modules/playwright/index.mjs`).href);
-          const fd=fs.openSync('evidence/dev.log','w');
-          const child=spawn('npm',['run','dev'],{detached:true,stdio:['ignore',fd,fd]});
-          const browser=await chromium.launch({headless:true});
-          const page=await browser.newPage({viewport:{width:1440,height:1000}});
-          const errors=[];page.on('pageerror',e=>errors.push(e.message));
-          async function snapshot(name){
-            await page.waitForTimeout(2000);
-            const data={url:page.url(),text:await page.locator('body').innerText(),errors:[...errors],links:await page.getByRole('link').evaluateAll(a=>a.map(x=>({text:x.textContent,href:x.getAttribute('href')}))),buttons:await page.getByRole('button').allTextContents(),fields:await page.locator('input,textarea').evaluateAll(a=>a.map(x=>({tag:x.tagName,type:x.type,name:x.name,placeholder:x.placeholder,value:x.value})))};
-            fs.writeFileSync(`evidence/${name}.json`,JSON.stringify(data,null,2));
-            await page.screenshot({path:`evidence/${name}.png`,fullPage:true});
-          }
-          try{
-            let ready=false;
-            for(let i=0;i<90;i++){try{if((await fetch('http://localhost:4321/')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,1000));}
-            if(!ready)throw Error('Local dev server unavailable');
-            await page.goto('http://localhost:4321/admin/index.html',{waitUntil:'domcontentloaded'});
-            await page.getByRole('button',{name:'Enter Edit Mode',exact:true}).click({timeout:30000});
-            await snapshot('editor-entered');
-            await page.goto('http://localhost:4321/admin/index.html#/collections/home',{waitUntil:'domcontentloaded'});
-            await snapshot('home-collection');
-            const edit=page.locator('a[href*="/collections/edit/home/"]').first();
-            if(await edit.count()){await edit.click();await snapshot('home-edit');}
-            await page.goto('http://localhost:4321/admin/index.html#/screens/media',{waitUntil:'domcontentloaded'});
-            await snapshot('media');
-            if(errors.length)throw Error(errors.join('; '));
-          }finally{await browser.close();try{process.kill(-child.pid,'SIGTERM');}catch{}}
-          JS
+      - name: Validate desktop, mobile, local editing, save, preview and media
+        run: node scripts/test-tina-migration.mjs
+      - name: Ensure test content was restored
+        if: always()
+        run: git diff --exit-code -- src/content/home/home.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

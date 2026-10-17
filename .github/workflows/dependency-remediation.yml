@@ -20,59 +20,80 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - name: Preserve exact source and the two unpatched upstream implementations
+      - name: Reproduce original defects and record existing peer declarations
         run: |
           mkdir -p evidence
           git rev-parse HEAD > evidence/revision.txt
-          git archive --format=zip --output=evidence/source.zip HEAD
           npm ci --ignore-scripts
-          node <<'JS'
-          const fs=require('node:fs'),path=require('node:path');
-          const lock=JSON.parse(fs.readFileSync('package-lock.json'));
-          const out={};
-          for(const name of ['braces','sprintf-js']){
-            const root=path.join('node_modules',name); out[name]={lock:lock.packages[root],files:{}};
-            function visit(dir){for(const item of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,item.name);if(item.isDirectory()&&item.name!=='node_modules')visit(p);else if(item.isFile()&&/\.(js|json)$|license/i.test(p))out[name].files[path.relative(root,p)]=fs.readFileSync(p,'utf8');}}
-            visit(root);
-          }
-          fs.writeFileSync('evidence/unpatched-sources.json',JSON.stringify(out,null,2));
-          JS
-      - name: Pin minimal fixed versions and validate peer resolution
+          node scripts/verify-security-vendors.cjs --baseline | tee evidence/baseline-reproduction.json
+          set +e
+          npm ls --all --json > evidence/tree-before.json
+          echo "$?" > evidence/tree-before.exit
+          npm audit --json > evidence/audit-before.json
+          echo "$?" > evidence/audit-before.exit
+          set -e
+      - name: Apply fingerprint-checked source patches and minimal upstream fixes
         run: |
-          node <<'JS'
-          const fs=require('node:fs'),p=JSON.parse(fs.readFileSync('package.json'));
-          p.overrides={...p.overrides,'@graphql-tools/utils':'12.1.0','postcss-selector-parser':'7.1.6','katex':'0.18.2','react-router':'7.18.4','react-router-dom':'7.18.4'};
-          fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
-          JS
+          python scripts/prepare-security-vendors.py
           npm install --package-lock-only --ignore-scripts
           npm ci
-          npm ls --all --json > evidence/tree.json
-          cp package.json package-lock.json evidence/
+          npm run security:vendor | tee evidence/security-vendor.log
           set +e
-          npm audit --json > evidence/npm-audit.json
-          echo "$?" > evidence/npm-audit.exit
+          npm ls --all --json > evidence/tree-after.json
+          echo "$?" > evidence/tree-after.exit
           set -e
-          node -e "const a=require('./evidence/npm-audit.json');if(!a.metadata)throw Error('Audit unavailable');console.log(a.metadata.vulnerabilities); for(const n of ['@graphql-tools/utils','postcss-selector-parser','katex','react-router','react-router-dom'])if(a.vulnerabilities[n])throw Error(n+' remains affected');"
+          node <<'JS'
+          const fs=require('node:fs');
+          const before=JSON.parse(fs.readFileSync('evidence/tree-before.json'));
+          const after=JSON.parse(fs.readFileSync('evidence/tree-after.json'));
+          const added=(after.problems||[]).filter(p=>!(before.problems||[]).includes(p));
+          if(added.length)throw Error('New dependency resolution problems: '+JSON.stringify(added));
+          fs.writeFileSync('evidence/peer-status.json',JSON.stringify({existing:before.problems||[],remaining:after.problems||[],newProblems:added},null,2));
+          JS
+          set +e
+          npm audit --json > evidence/audit-after.json
+          status=$?
+          set -e
+          echo "$status" > evidence/audit-after.exit
+          node -e "const a=require('./evidence/audit-after.json');if(!a.metadata)throw Error('Audit unavailable');console.log(a.metadata.vulnerabilities)"
+          test "$status" = 0
+          npm audit --omit=dev --audit-level=high
+      - name: Integrate independent local-patch checks into permanent validation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/tina-migration-validation.yml');s=p.read_text()
+          for command in ['npm ci','npm ci --ignore-scripts']:
+              old='          '+command+'\n'
+              if s.count(old)!=1:raise SystemExit('Unexpected install step; refusing workflow edit')
+              s=s.replace(old,old+'          npm run security:vendor | tee evidence/security-vendor.log\n',1)
+          p.write_text(s)
+          PY
       - name: Build and check all existing content
         run: |
           npm run build 2>&1 | tee evidence/build.log
           npm run check 2>&1 | tee evidence/check.log
-          npm audit --omit=dev --audit-level=high
-      - name: Exercise editing, save, preview and media with new dependencies
+          for p in index.html projects/cuhksz-microworld/index.html projects/holistic-assistant/index.html projects/market-watchdog/index.html projects/ai-sync/index.html 2026/02/26/holistic-assistant-setback/index.html admin/index.html CNAME rss.xml sitemap-index.xml robots.txt; do test -f "dist/client/$p"; done
+          grep -q jasperjlou.me dist/client/CNAME
+      - name: Exercise editing, save, preview and media with patched dependencies
         run: |
           npm install --prefix "$RUNNER_TEMP/tina-browser" --ignore-scripts --no-audit --no-fund playwright@1.64.1
           "$RUNNER_TEMP/tina-browser/node_modules/.bin/playwright" install --with-deps chromium
           node scripts/test-tina-migration.mjs
           git diff --exit-code -- src/content/home/home.json
-          mkdir -p candidate/tina
+          mkdir -p candidate/tina candidate/.github/workflows
           cp package.json package-lock.json candidate/
           cp tina/tina-lock.json candidate/tina/
+          cp -R vendor candidate/
+          cp .github/workflows/tina-migration-validation.yml candidate/.github/workflows/
+          cp vendor/security-patches.json evidence/
+          git diff --check
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: dependency-remediation-evidence
           path: evidence/
-          retention-days: 7
+          retention-days: 14
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: success()
@@ -81,3 +102,35 @@ jobs:
           path: candidate/
           retention-days: 7
           if-no-files-found: error
+  commit:
+    needs: candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: dependency-remediation-candidate
+          path: ${{ runner.temp }}/candidate
+      - name: Commit exact tested files without overwriting concurrent work
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          TARGET_BRANCH: ${{ github.ref_name }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          cp "$RUNNER_TEMP/candidate/package.json" package.json
+          cp "$RUNNER_TEMP/candidate/package-lock.json" package-lock.json
+          cp "$RUNNER_TEMP/candidate/tina/tina-lock.json" tina/tina-lock.json
+          test ! -e vendor/braces
+          cp -R "$RUNNER_TEMP/candidate/vendor" ./
+          cp "$RUNNER_TEMP/candidate/.github/workflows/tina-migration-validation.yml" .github/workflows/tina-migration-validation.yml
+          git add package.json package-lock.json tina/tina-lock.json vendor .github/workflows/tina-migration-validation.yml
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: apply validated upstream security upgrades and transparent local source patches'
+          git push origin "HEAD:$TARGET_BRANCH"

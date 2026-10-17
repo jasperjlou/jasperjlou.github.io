@@ -2,7 +2,7 @@ name: Tina migration validation
 
 on:
   push:
-    branches: [agent/tinacms-security-migration-20261017]
+    branches: [source, agent/tinacms-security-migration-20261017]
   pull_request:
     branches: [source]
 
@@ -40,7 +40,8 @@ jobs:
           mkdir -p evidence
           git rev-parse HEAD > evidence/revision.txt
           npm ci
-      - name: Preserve production gate and record outstanding full-tree advisories
+          npm run security:vendor | tee evidence/security-vendor.log
+      - name: Preserve production gate and record full-tree advisories
         run: |
           npm audit --omit=dev --audit-level=high
           set +e
@@ -56,7 +57,7 @@ jobs:
           if (a.metadata.vulnerabilities.critical) process.exit(1);
           const cli = a.vulnerabilities['@tinacms/cli'];
           if (cli && cli.via.some(v => typeof v === 'object' && v.url.includes('GHSA-pwhx-cvv3-qj5c'))) throw Error('Branch injection advisory remains');
-          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Functional validation is separate from security acceptance. Full-tree advisories are enforced by full-dependency-audit and tracked in #31: ${JSON.stringify(a.metadata.vulnerabilities)}\n`);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Registry findings: ${JSON.stringify(a.metadata.vulnerabilities)}. Local derivatives require the separate security:vendor source and regression checks; registry audit alone does not validate their patches.\n`);
           JS
       - name: Build and type-check
         run: |
@@ -101,6 +102,7 @@ jobs:
           mkdir -p evidence
           git rev-parse HEAD > evidence/revision.txt
           npm ci --ignore-scripts
+          npm run security:vendor | tee evidence/security-vendor.log
           set +e
           npm audit --json > evidence/npm-audit-full.json
           status=$?

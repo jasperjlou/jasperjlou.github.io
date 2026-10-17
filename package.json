@@ -14,21 +14,38 @@
     "build:cloud": "tinacms build --content=local -c \"astro build\"",
     "preview": "node ./dist/server/entry.mjs",
     "check": "astro check",
-    "validate": "npm run build && npm run check"
+    "validate": "npm run build && npm run check",
+    "security:vendor": "node scripts/verify-security-vendors.cjs"
   },
   "dependencies": {
     "@astrojs/node": "^11.1.1",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
-    "@tinacms/astro": "^0.6.1",
+    "@tinacms/astro": "0.7.1",
     "astro": "^7.2.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "@tinacms/cli": "^2.5.6",
+    "@tinacms/cli": "4.0.2",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "tinacms": "^3.11.0",
-    "typescript": "^6.0.3"
+    "tinacms": "3.14.4",
+    "typescript": "^6.0.3",
+    "braces": "file:vendor/braces",
+    "sprintf-js": "file:vendor/sprintf-js"
+  },
+  "overrides": {
+    "braces": "$braces",
+    "sprintf-js": "$sprintf-js",
+    "postcss-selector-parser": "7.1.6",
+    "@graphql-tools/utils": "12.1.0",
+    "katex": "0.18.2",
+    "react-router": "7.18.4",
+    "react-router-dom": "7.18.4",
+    "@graphql-tools/graphql-file-loader": "8.1.24",
+    "@graphql-tools/load": "8.1.21",
+    "@graphql-tools/import": "7.2.4",
+    "@graphql-tools/schema": "10.1.5",
+    "@graphql-tools/merge": "9.2.8"
   }
 }

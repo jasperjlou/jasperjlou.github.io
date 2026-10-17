@@ -1,0 +1,119 @@
+name: Tina migration validation
+
+on:
+  push:
+    branches: [source, agent/tinacms-security-migration-20261017]
+  pull_request:
+    branches: [source]
+
+permissions:
+  contents: read
+
+# An unspecified Linux shell uses bash -e, which can hide failures before tee.
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: tina-migration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Verify that logging cannot hide failed commands
+        run: |
+          status=0
+          (exit 23) | tee "$RUNNER_TEMP/pipeline-probe.log" || status=$?
+          test "$status" -eq 23
+      - name: Install exact committed dependencies
+        run: |
+          mkdir -p evidence
+          git rev-parse HEAD > evidence/revision.txt
+          npm ci
+          npm run security:vendor | tee evidence/security-vendor.log
+      - name: Preserve production gate and record full-tree advisories
+        run: |
+          npm audit --omit=dev --audit-level=high
+          set +e
+          npm audit --json > evidence/audit-full.json
+          status=$?
+          set -e
+          echo "$status" > evidence/audit-full.exit
+          node <<'JS'
+          const fs = require('node:fs');
+          const a = require('./evidence/audit-full.json');
+          if (!a.metadata) throw Error('Audit unavailable');
+          console.log(a.metadata);
+          if (a.metadata.vulnerabilities.critical) process.exit(1);
+          const cli = a.vulnerabilities['@tinacms/cli'];
+          if (cli && cli.via.some(v => typeof v === 'object' && v.url.includes('GHSA-pwhx-cvv3-qj5c'))) throw Error('Branch injection advisory remains');
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Registry findings: ${JSON.stringify(a.metadata.vulnerabilities)}. Local derivatives require the separate security:vendor source and regression checks; registry audit alone does not validate their patches.\n`);
+          JS
+      - name: Build and type-check
+        run: |
+          npm run build 2>&1 | tee evidence/build.log
+          npm run check 2>&1 | tee evidence/check.log
+      - name: Verify required public artifacts
+        run: |
+          for p in index.html projects/cuhksz-microworld/index.html projects/holistic-assistant/index.html projects/market-watchdog/index.html projects/ai-sync/index.html 2026/02/26/holistic-assistant-setback/index.html admin/index.html CNAME rss.xml sitemap-index.xml robots.txt; do test -f "dist/client/$p"; done
+          grep -q 'jasperjlou.me' dist/client/CNAME
+          grep -q '<html lang="en">' dist/client/index.html
+          grep -q '<link rel="canonical" href="https://jasperjlou.me/' dist/client/index.html
+      - name: Install isolated browser test tooling
+        run: |
+          npm install --prefix "$RUNNER_TEMP/tina-browser" --ignore-scripts --no-audit --no-fund playwright@1.64.1
+          "$RUNNER_TEMP/tina-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Validate desktop, mobile, local editing, save, preview and media
+        run: node scripts/test-tina-migration.mjs
+      - name: Ensure test content was restored
+        if: always()
+        run: git diff --exit-code -- src/content/home/home.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tina-editor-evidence
+          path: evidence/
+          retention-days: 14
+          if-no-files-found: error
+
+  full-dependency-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Audit all dependencies and preserve the real exit status
+        run: |
+          mkdir -p evidence
+          git rev-parse HEAD > evidence/revision.txt
+          npm ci --ignore-scripts
+          npm run security:vendor | tee evidence/security-vendor.log
+          set +e
+          npm audit --json > evidence/npm-audit-full.json
+          status=$?
+          set -e
+          echo "$status" > evidence/npm-audit-full.exit
+          node -e "const a=require('./evidence/npm-audit-full.json'); if(!a.metadata)throw Error('Audit unavailable'); console.log(JSON.stringify(a.metadata.vulnerabilities,null,2));"
+          exit "$status"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tina-full-dependency-audit
+          path: evidence/
+          retention-days: 14
+          if-no-files-found: error

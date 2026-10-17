@@ -9,6 +9,11 @@ on:
 permissions:
   contents: read
 
+# An unspecified Linux shell uses bash -e, which can hide failures before tee.
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: tina-migration-${{ github.ref }}
   cancel-in-progress: true
@@ -25,13 +30,17 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - name: Verify that logging cannot hide failed commands
+        run: |
+          status=0
+          (exit 23) | tee "$RUNNER_TEMP/pipeline-probe.log" || status=$?
+          test "$status" -eq 23
       - name: Install exact committed dependencies
         run: |
           mkdir -p evidence
           git rev-parse HEAD > evidence/revision.txt
           npm ci
       - name: Preserve production gate and record outstanding full-tree advisories
-        shell: bash
         run: |
           npm audit --omit=dev --audit-level=high
           set +e
@@ -47,7 +56,7 @@ jobs:
           if (a.metadata.vulnerabilities.critical) process.exit(1);
           const cli = a.vulnerabilities['@tinacms/cli'];
           if (cli && cli.via.some(v => typeof v === 'object' && v.url.includes('GHSA-pwhx-cvv3-qj5c'))) throw Error('Branch injection advisory remains');
-          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Full audit is not clean; remaining findings are tracked in #31: ${JSON.stringify(a.metadata.vulnerabilities)}\n`);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Functional validation is separate from security acceptance. Full-tree advisories are enforced by full-dependency-audit and tracked in #31: ${JSON.stringify(a.metadata.vulnerabilities)}\n`);
           JS
       - name: Build and type-check
         run: |
@@ -72,6 +81,37 @@ jobs:
         if: always()
         with:
           name: tina-editor-evidence
+          path: evidence/
+          retention-days: 14
+          if-no-files-found: error
+
+  full-dependency-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Audit all dependencies and preserve the real exit status
+        run: |
+          mkdir -p evidence
+          git rev-parse HEAD > evidence/revision.txt
+          npm ci --ignore-scripts
+          set +e
+          npm audit --json > evidence/npm-audit-full.json
+          status=$?
+          set -e
+          echo "$status" > evidence/npm-audit-full.exit
+          node -e "const a=require('./evidence/npm-audit-full.json'); if(!a.metadata)throw Error('Audit unavailable'); console.log(JSON.stringify(a.metadata.vulnerabilities,null,2));"
+          exit "$status"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tina-full-dependency-audit
           path: evidence/
           retention-days: 14
           if-no-files-found: error

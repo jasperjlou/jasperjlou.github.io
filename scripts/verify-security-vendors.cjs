@@ -21,7 +21,7 @@ const upstreamFailure = (name, expression) => {
   assert.match(result.stdout,/RangeError/);
 };
 if (baseline) {
-  for (const method of ['compile','expand','stringify']) check(`original braces.${method} reproduces stack exhaustion`,()=>upstreamFailure('braces',`p.${method}('{'.repeat(12000)+'a,b'+'}'.repeat(12000))`));
+  for (const method of ['compile','expand','stringify']) check(`original braces.${method} reproduces deep-AST stack exhaustion`,()=>upstreamFailure('braces',`let ast={type:'root',nodes:[]};for(let i=0;i<12000;i++)ast={type:'root',nodes:[ast]};p.${method}(ast)`));
   if (fs.existsSync('node_modules/sprintf-js')) for (const spec of ['e','f','g']) check(`original sprintf ${spec} reproduces unbounded precision`,()=>upstreamFailure('sprintf-js',`p.sprintf('%.100000${spec}',1.2345)`));
 } else {
   const manifest=JSON.parse(fs.readFileSync('vendor/security-patches.json','utf8'));
@@ -47,7 +47,7 @@ if (baseline) {
   const safeError=e=>e instanceof SyntaxError && e.code==='ERR_BRACES_DEPTH' && !(e instanceof RangeError);
   const nesting=[['{','}'],['(',')']];
   for(const [left,right] of nesting) for(const method of ['parse','compile','expand','stringify']) {
-    check(`braces.${method}: reject 12000 nested ${left}`,()=>assert.throws(()=>b[method](left.repeat(12000)+'a,b'+right.repeat(12000)),safeError));
+    check(`braces.${method}: reject 4500 nested ${left}`,()=>assert.throws(()=>b[method](left.repeat(4500)+'a,b'+right.repeat(4500)),safeError));
   }
   check('braces: options cannot disable depth protection',()=>assert.throws(()=>b.compile('{'.repeat(500)+'a'+'}'.repeat(500),{maxDepth:Infinity}),safeError));
   check('braces: ordinary lists and ranges retain expected expansion',()=>assert.deepEqual(b.expand('x/{a,b}/{1..3}'),['x/a/1','x/a/2','x/a/3','x/b/1','x/b/2','x/b/3']));

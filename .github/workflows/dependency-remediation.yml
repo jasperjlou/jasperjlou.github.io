@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - name: Reproduce original defects and record existing peer declarations
+      - name: Reproduce original defects and record baseline
         run: |
           mkdir -p evidence
           git rev-parse HEAD > evidence/revision.txt
@@ -32,9 +32,28 @@ jobs:
           npm audit --json > evidence/audit-before.json
           echo "$?" > evidence/audit-before.exit
           set -e
-      - name: Apply fingerprint-checked source patches and minimal upstream fixes
+      - name: Apply source patches and align the GraphQL parent packages
         run: |
           python scripts/prepare-security-vendors.py
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const p=JSON.parse(fs.readFileSync('package.json'));
+          const metadata={};
+          for(const [name,major] of [['@graphql-tools/graphql-file-loader',8],['@graphql-tools/load',8],['@graphql-tools/import',7],['@graphql-tools/schema',10],['@graphql-tools/merge',9]]){
+            const response=await fetch(`https://registry.npmjs.org/${encodeURIComponent(name)}`);
+            if(!response.ok)throw Error(`${name}: HTTP ${response.status}`);
+            const all=await response.json();
+            const versions=Object.keys(all.versions).filter(v=>new RegExp(`^${major}\\.\\d+\\.\\d+$`).test(v));
+            versions.sort((a,b)=>{const x=a.split('.').map(Number),y=b.split('.').map(Number);for(let i=0;i<3;i++){if(x[i]!==y[i])return x[i]-y[i];}return 0;});
+            const version=versions.at(-1);if(!version)throw Error(`${name}: reviewed major unavailable`);
+            const item=all.versions[version];
+            metadata[name]={version,published:all.time[version],dependencies:item.dependencies,peerDependencies:item.peerDependencies,engines:item.engines};
+            p.overrides[name]=version;
+          }
+          fs.writeFileSync('evidence/graphql-registry.json',JSON.stringify(metadata,null,2));
+          console.log(JSON.stringify(metadata,null,2));
+          fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
+          JS
           npm install --package-lock-only --ignore-scripts
           npm ci
           npm run security:vendor | tee evidence/security-vendor.log
@@ -47,8 +66,8 @@ jobs:
           const before=JSON.parse(fs.readFileSync('evidence/tree-before.json'));
           const after=JSON.parse(fs.readFileSync('evidence/tree-after.json'));
           const added=(after.problems||[]).filter(p=>!(before.problems||[]).includes(p));
-          if(added.length)throw Error('New dependency resolution problems: '+JSON.stringify(added));
           fs.writeFileSync('evidence/peer-status.json',JSON.stringify({existing:before.problems||[],remaining:after.problems||[],newProblems:added},null,2));
+          if(added.length)throw Error('New dependency resolution problems: '+JSON.stringify(added));
           JS
           set +e
           npm audit --json > evidence/audit-after.json
@@ -75,7 +94,7 @@ jobs:
           npm run check 2>&1 | tee evidence/check.log
           for p in index.html projects/cuhksz-microworld/index.html projects/holistic-assistant/index.html projects/market-watchdog/index.html projects/ai-sync/index.html 2026/02/26/holistic-assistant-setback/index.html admin/index.html CNAME rss.xml sitemap-index.xml robots.txt; do test -f "dist/client/$p"; done
           grep -q jasperjlou.me dist/client/CNAME
-      - name: Exercise editing, save, preview and media with patched dependencies
+      - name: Exercise editing, save, preview and media
         run: |
           npm install --prefix "$RUNNER_TEMP/tina-browser" --ignore-scripts --no-audit --no-fund playwright@1.64.1
           "$RUNNER_TEMP/tina-browser/node_modules/.bin/playwright" install --with-deps chromium

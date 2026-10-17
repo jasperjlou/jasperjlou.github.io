@@ -1,0 +1,83 @@
+name: Targeted dependency remediation
+on:
+  push:
+    branches: [agent/tinacms-security-migration-20261017]
+    paths: [.github/workflows/dependency-remediation.yml]
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Preserve exact source and the two unpatched upstream implementations
+        run: |
+          mkdir -p evidence
+          git rev-parse HEAD > evidence/revision.txt
+          git archive --format=zip --output=evidence/source.zip HEAD
+          npm ci --ignore-scripts
+          node <<'JS'
+          const fs=require('node:fs'),path=require('node:path');
+          const lock=JSON.parse(fs.readFileSync('package-lock.json'));
+          const out={};
+          for(const name of ['braces','sprintf-js']){
+            const root=path.join('node_modules',name); out[name]={lock:lock.packages[root],files:{}};
+            function visit(dir){for(const item of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,item.name);if(item.isDirectory()&&item.name!=='node_modules')visit(p);else if(item.isFile()&&/\.(js|json)$|license/i.test(p))out[name].files[path.relative(root,p)]=fs.readFileSync(p,'utf8');}}
+            visit(root);
+          }
+          fs.writeFileSync('evidence/unpatched-sources.json',JSON.stringify(out,null,2));
+          JS
+      - name: Pin minimal fixed versions and validate peer resolution
+        run: |
+          node <<'JS'
+          const fs=require('node:fs'),p=JSON.parse(fs.readFileSync('package.json'));
+          p.overrides={...p.overrides,'@graphql-tools/utils':'12.1.0','postcss-selector-parser':'7.1.6','katex':'0.18.2','react-router':'7.18.4','react-router-dom':'7.18.4'};
+          fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
+          JS
+          npm install --package-lock-only --ignore-scripts
+          npm ci
+          npm ls --all --json > evidence/tree.json
+          cp package.json package-lock.json evidence/
+          set +e
+          npm audit --json > evidence/npm-audit.json
+          echo "$?" > evidence/npm-audit.exit
+          set -e
+          node -e "const a=require('./evidence/npm-audit.json');if(!a.metadata)throw Error('Audit unavailable');console.log(a.metadata.vulnerabilities); for(const n of ['@graphql-tools/utils','postcss-selector-parser','katex','react-router','react-router-dom'])if(a.vulnerabilities[n])throw Error(n+' remains affected');"
+      - name: Build and check all existing content
+        run: |
+          npm run build 2>&1 | tee evidence/build.log
+          npm run check 2>&1 | tee evidence/check.log
+          npm audit --omit=dev --audit-level=high
+      - name: Exercise editing, save, preview and media with new dependencies
+        run: |
+          npm install --prefix "$RUNNER_TEMP/tina-browser" --ignore-scripts --no-audit --no-fund playwright@1.64.1
+          "$RUNNER_TEMP/tina-browser/node_modules/.bin/playwright" install --with-deps chromium
+          node scripts/test-tina-migration.mjs
+          git diff --exit-code -- src/content/home/home.json
+          mkdir -p candidate/tina
+          cp package.json package-lock.json candidate/
+          cp tina/tina-lock.json candidate/tina/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-remediation-evidence
+          path: evidence/
+          retention-days: 7
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: dependency-remediation-candidate
+          path: candidate/
+          retention-days: 7
+          if-no-files-found: error

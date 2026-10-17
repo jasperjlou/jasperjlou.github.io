@@ -1,4 +1,4 @@
-name: Targeted dependency remediation
+name: Apply validated dependency remediation
 on:
   push:
     branches: [agent/tinacms-security-migration-20261017]
@@ -9,148 +9,54 @@ defaults:
   run:
     shell: bash
 jobs:
-  candidate:
+  apply:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - name: Reproduce original defects and record baseline
-        run: |
-          mkdir -p evidence
-          git rev-parse HEAD > evidence/revision.txt
-          npm ci --ignore-scripts
-          node scripts/verify-security-vendors.cjs --baseline | tee evidence/baseline-reproduction.json
-          set +e
-          npm ls --all --json > evidence/tree-before.json
-          echo "$?" > evidence/tree-before.exit
-          npm audit --json > evidence/audit-before.json
-          echo "$?" > evidence/audit-before.exit
-          set -e
-      - name: Apply source patches and align the GraphQL parent packages
-        run: |
-          python scripts/prepare-security-vendors.py
-          node --input-type=module <<'JS'
-          import fs from 'node:fs';
-          const p=JSON.parse(fs.readFileSync('package.json'));
-          const metadata={};
-          for(const [name,major] of [['@graphql-tools/graphql-file-loader',8],['@graphql-tools/load',8],['@graphql-tools/import',7],['@graphql-tools/schema',10],['@graphql-tools/merge',9]]){
-            const response=await fetch(`https://registry.npmjs.org/${encodeURIComponent(name)}`);
-            if(!response.ok)throw Error(`${name}: HTTP ${response.status}`);
-            const all=await response.json();
-            const versions=Object.keys(all.versions).filter(v=>new RegExp(`^${major}\\.\\d+\\.\\d+$`).test(v));
-            versions.sort((a,b)=>{const x=a.split('.').map(Number),y=b.split('.').map(Number);for(let i=0;i<3;i++){if(x[i]!==y[i])return x[i]-y[i];}return 0;});
-            const version=versions.at(-1);if(!version)throw Error(`${name}: reviewed major unavailable`);
-            const item=all.versions[version];
-            metadata[name]={version,published:all.time[version],dependencies:item.dependencies,peerDependencies:item.peerDependencies,engines:item.engines};
-            p.overrides[name]=version;
-          }
-          fs.writeFileSync('evidence/graphql-registry.json',JSON.stringify(metadata,null,2));
-          console.log(JSON.stringify(metadata,null,2));
-          fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
-          JS
-          npm install --package-lock-only --ignore-scripts
-          npm ci
-          npm run security:vendor | tee evidence/security-vendor.log
-          set +e
-          npm ls --all --json > evidence/tree-after.json
-          echo "$?" > evidence/tree-after.exit
-          set -e
-          node <<'JS'
-          const fs=require('node:fs');
-          const before=JSON.parse(fs.readFileSync('evidence/tree-before.json'));
-          const after=JSON.parse(fs.readFileSync('evidence/tree-after.json'));
-          const added=(after.problems||[]).filter(p=>!(before.problems||[]).includes(p));
-          fs.writeFileSync('evidence/peer-status.json',JSON.stringify({existing:before.problems||[],remaining:after.problems||[],newProblems:added},null,2));
-          if(added.length)throw Error('New dependency resolution problems: '+JSON.stringify(added));
-          JS
-          set +e
-          npm audit --json > evidence/audit-after.json
-          status=$?
-          set -e
-          echo "$status" > evidence/audit-after.exit
-          node -e "const a=require('./evidence/audit-after.json');if(!a.metadata)throw Error('Audit unavailable');console.log(a.metadata.vulnerabilities)"
-          test "$status" = 0
-          npm audit --omit=dev --audit-level=high
-      - name: Integrate independent local-patch checks into permanent validation
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('.github/workflows/tina-migration-validation.yml');s=p.read_text()
-          for command in ['npm ci','npm ci --ignore-scripts']:
-              old='          '+command+'\n'
-              if s.count(old)!=1:raise SystemExit('Unexpected install step; refusing workflow edit')
-              s=s.replace(old,old+'          npm run security:vendor | tee evidence/security-vendor.log\n',1)
-          p.write_text(s)
-          PY
-      - name: Build and check all existing content
-        run: |
-          npm run build 2>&1 | tee evidence/build.log
-          npm run check 2>&1 | tee evidence/check.log
-          for p in index.html projects/cuhksz-microworld/index.html projects/holistic-assistant/index.html projects/market-watchdog/index.html projects/ai-sync/index.html 2026/02/26/holistic-assistant-setback/index.html admin/index.html CNAME rss.xml sitemap-index.xml robots.txt; do test -f "dist/client/$p"; done
-          grep -q jasperjlou.me dist/client/CNAME
-      - name: Exercise editing, save, preview and media
-        run: |
-          npm install --prefix "$RUNNER_TEMP/tina-browser" --ignore-scripts --no-audit --no-fund playwright@1.64.1
-          "$RUNNER_TEMP/tina-browser/node_modules/.bin/playwright" install --with-deps chromium
-          node scripts/test-tina-migration.mjs
-          git diff --exit-code -- src/content/home/home.json
-          mkdir -p candidate/tina candidate/.github/workflows
-          cp package.json package-lock.json candidate/
-          cp tina/tina-lock.json candidate/tina/
-          cp -R vendor candidate/
-          cp .github/workflows/tina-migration-validation.yml candidate/.github/workflows/
-          cp vendor/security-patches.json evidence/
-          git diff --check
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: dependency-remediation-evidence
-          path: evidence/
-          retention-days: 14
-          if-no-files-found: error
-      - uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: dependency-remediation-candidate
-          path: candidate/
-          include-hidden-files: true
-          retention-days: 7
-          if-no-files-found: error
-  commit:
-    needs: candidate
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
       contents: write
+      actions: read
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
-      - uses: actions/download-artifact@v4
+          fetch-depth: 2
+      - uses: actions/setup-node@v7
         with:
-          name: dependency-remediation-candidate
-          path: ${{ runner.temp }}/candidate
-      - name: Commit exact tested files without overwriting concurrent work
+          node-version: 24
+      - name: Refuse changes to the source that passed complete validation
         env:
-          EXPECTED_SHA: ${{ github.sha }}
-          TARGET_BRANCH: ${{ github.ref_name }}
+          VALIDATED_SHA: e5646712fc4372ef94c95a3676dea1684772c844
         run: |
-          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
-          cp "$RUNNER_TEMP/candidate/package.json" package.json
-          cp "$RUNNER_TEMP/candidate/package-lock.json" package-lock.json
-          cp "$RUNNER_TEMP/candidate/tina/tina-lock.json" tina/tina-lock.json
+          test "$(git rev-parse HEAD^)" = "$VALIDATED_SHA"
+          git diff --exit-code "$VALIDATED_SHA" HEAD -- . ':(exclude).github/workflows/dependency-remediation.yml'
+      - name: Retrieve the immutable validated artifact and verify its ZIP digest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api /repos/jasperjlou/jasperjlou.github.io/actions/artifacts/12089443224/zip > "$RUNNER_TEMP/candidate.zip"
+          echo "ec5d0b0daf86413a63e56d7f36f4fe766b81cb12cc6f53d7b216e86856e19661  $RUNNER_TEMP/candidate.zip" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/candidate"
+          unzip -q "$RUNNER_TEMP/candidate.zip" -d "$RUNNER_TEMP/candidate"
+      - name: Apply only validated dependencies and independently verify installed patch sources
+        run: |
+          for p in package.json package-lock.json tina/tina-lock.json; do cp "$RUNNER_TEMP/candidate/$p" "$p"; done
           test ! -e vendor/braces
           cp -R "$RUNNER_TEMP/candidate/vendor" ./
-          cp "$RUNNER_TEMP/candidate/.github/workflows/tina-migration-validation.yml" .github/workflows/tina-migration-validation.yml
-          git add package.json package-lock.json tina/tina-lock.json vendor .github/workflows/tina-migration-validation.yml
-          git diff --cached --check
+          echo '8499bc8766827be7371f5d493787f290b73f27256c4e7e480ef0ad93f29f5d99  package.json' | sha256sum --check
+          echo '853d3acadabdc685dac5bb406465d015af64f93f377d818b197d1d56b80bd03f  package-lock.json' | sha256sum --check
+          echo '16052e9482c3fb7f38cdba7024e46a9832b39bbc05e4ec602aae26b8a958b4cf  tina/tina-lock.json' | sha256sum --check
+          npm ci --ignore-scripts
+          npm run security:vendor
+          npm audit
+      - name: Commit the exact tested source without changing production or workflow permissions
+        env:
+          TARGET_BRANCH: ${{ github.ref_name }}
+        run: |
+          git add package.json package-lock.json tina/tina-lock.json vendor
+          # Preserve upstream EOF bytes and required leading spaces in unified-diff
+          # context lines. All other source whitespace checks remain enforced.
+          git -c core.whitespace=-blank-at-eof diff --cached --check -- . ':(exclude)vendor/*/security.patch'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'fix: apply validated upstream security upgrades and transparent local source patches'
+          git commit -m 'fix: align security-fixed GraphQL and editor dependencies with reviewed source patches'
           git push origin "HEAD:$TARGET_BRANCH"

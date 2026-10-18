@@ -32,20 +32,20 @@ jobs:
         run: npm ci
 
       - name: Audit dependencies
-        run: npm audit --omit=dev --audit-level=high
+        run: |
+          npm audit
+          npm run security:vendor
+
+      - name: Test production build guards
+        run: node --test scripts/test-cloud-build.mjs
 
       - name: Build site and TinaCMS editor
         env:
           GITHUB_BRANCH: source
-          PUBLIC_TINA_CLIENT_ID: ${{ secrets.PUBLIC_TINA_CLIENT_ID }}
+          PUBLIC_TINA_CLIENT_ID: ${{ vars.PUBLIC_TINA_CLIENT_ID || secrets.PUBLIC_TINA_CLIENT_ID }}
           TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
         shell: bash
-        run: |
-          if [[ -n "$PUBLIC_TINA_CLIENT_ID" && -n "$TINA_TOKEN" ]]; then
-            npm run build:cloud
-          else
-            npm run build
-          fi
+        run: npm run build:cloud
 
       - name: Validate content and types
         run: npm run check

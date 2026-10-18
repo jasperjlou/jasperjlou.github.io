@@ -11,7 +11,7 @@
     "dev:site": "astro dev",
     "start": "npm run dev",
     "build": "tinacms build --local --skip-cloud-checks -c \"astro build\"",
-    "build:cloud": "tinacms build --content=local -c \"astro build\"",
+    "build:cloud": "node scripts/verify-cloud-build.mjs config && tinacms build --content=local -c \"astro build\" && node scripts/verify-cloud-build.mjs artifact",
     "preview": "node ./dist/server/entry.mjs",
     "check": "astro check",
     "validate": "npm run build && npm run check",

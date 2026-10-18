@@ -1,0 +1,20 @@
+{
+  "description": "JavaScript sprintf implementation",
+  "author": "Alexandru Marasteanu <hello@alexei.ro> (http://alexei.ro/)",
+  "license": "BSD-3-Clause",
+  "main": "src/sprintf.js",
+  "name": "@jasperjlou/sprintf-js-security-patch",
+  "version": "1.0.3-project.1",
+  "private": true,
+  "files": [
+    "LICENSE",
+    "src/sprintf.js"
+  ],
+  "upstream": {
+    "name": "sprintf-js",
+    "version": "1.0.3",
+    "resolved": "https://registry.npmjs.org/sprintf-js/-/sprintf-js-1.0.3.tgz",
+    "integrity": "sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==",
+    "advisory": "https://github.com/advisories/GHSA-hp3w-g68c-fv3c"
+  }
+}

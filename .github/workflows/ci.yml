@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Test production build guards
+        run: node --test scripts/test-cloud-build.mjs
+
       - name: Audit dependencies
         run: npm audit --omit=dev --audit-level=high
 

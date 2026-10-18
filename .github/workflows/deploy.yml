@@ -5,6 +5,11 @@ on:
     branches:
       - source
   workflow_dispatch:
+    inputs:
+      restore_snapshot:
+        description: Restore verified pre-cutover public snapshot (candidate branches only rehearse)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -17,6 +22,7 @@ concurrency:
 
 jobs:
   build:
+    if: ${{ !inputs.restore_snapshot }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
@@ -32,20 +38,20 @@ jobs:
         run: npm ci
 
       - name: Audit dependencies
-        run: npm audit --omit=dev --audit-level=high
+        run: |
+          npm audit
+          npm run security:vendor
+
+      - name: Test production build guards
+        run: node --test scripts/test-cloud-build.mjs
 
       - name: Build site and TinaCMS editor
         env:
           GITHUB_BRANCH: source
-          PUBLIC_TINA_CLIENT_ID: ${{ secrets.PUBLIC_TINA_CLIENT_ID }}
+          PUBLIC_TINA_CLIENT_ID: ${{ vars.PUBLIC_TINA_CLIENT_ID || secrets.PUBLIC_TINA_CLIENT_ID }}
           TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
         shell: bash
-        run: |
-          if [[ -n "$PUBLIC_TINA_CLIENT_ID" && -n "$TINA_TOKEN" ]]; then
-            npm run build:cloud
-          else
-            npm run build
-          fi
+        run: npm run build:cloud
 
       - name: Validate content and types
         run: npm run check
@@ -58,12 +64,39 @@ jobs:
         with:
           path: ./dist/client
 
+  restore:
+    if: ${{ inputs.restore_snapshot }}
+    runs-on: ubuntu-latest
+    # GitHub requires contents:write to read an unpublished recovery release.
+    # Keep the backup private to repository maintainers and scope this to restore.
+    permissions:
+      contents: write
+      pages: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Download preserved snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download recovery-public-20261018 --repo "$GITHUB_REPOSITORY" --dir "$RUNNER_TEMP/snapshot" --pattern 'site-*'
+      - name: Verify hashes and restore static files
+        run: python3 scripts/restore-pages-snapshot.py "$RUNNER_TEMP/snapshot" dist/client
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+      - name: Upload restored Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./dist/client
+
   deploy:
+    # A manual run on a candidate branch validates its artifact without publishing it.
+    if: ${{ always() && github.ref == 'refs/heads/source' && (needs.build.result == 'success' || needs.restore.result == 'success') }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, restore]
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

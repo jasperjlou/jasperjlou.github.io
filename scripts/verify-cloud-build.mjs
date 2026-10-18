@@ -8,7 +8,7 @@ export function requireCloudConfig(env) {
   if (missing.length) throw new Error(`Missing Tina Cloud configuration: ${missing.join(', ')}`);
   if (env.GITHUB_BRANCH !== 'source') throw new Error('Production Tina branch must be source');
   if (!/^[a-zA-Z0-9_-]+$/.test(env.PUBLIC_TINA_CLIENT_ID)) throw new Error('Invalid Tina client ID format');
-  return `https://content.tinajs.io/content/${env.PUBLIC_TINA_CLIENT_ID}/github/source`;
+  return `/content/${env.PUBLIC_TINA_CLIENT_ID}/github/source`;
 }
 
 function* files(dir) {
@@ -24,8 +24,11 @@ export function verifyCloudArtifact(root, env) {
   const expected = requireCloudConfig(env);
   const client = fs.readFileSync(path.join(root, 'tina/__generated__/client.ts'), 'utf8');
   // Inspect the selected API URL, not unused localhost strings bundled by dependencies.
-  const urls = [...client.matchAll(/(?:apiUrl|url)\s*:\s*["'`]([^"'`]+)["'`]/g)].map(match => match[1]);
-  if (!urls.includes(expected) || urls.some(url => /localhost|127\.0\.0\.1|\[::1\]/i.test(url))) {
+  const urls = [...client.matchAll(/(?:apiUrl|url)\s*:\s*(?:process\.env\.TINA_LOCAL_URL\s*\|\|\s*)?["'`]([^"'`]+)["'`]/g)].map(match => match[1]);
+  const selected = urls.length === 1 ? new URL(urls[0]) : null;
+  if (!selected || selected.origin !== 'https://content.tinajs.io' ||
+      selected.pathname.replace(/^\/\d+(?:\.\d+)*\//, '/') !== expected ||
+      selected.search || selected.hash || selected.username || selected.password) {
     throw new Error('Generated Tina client does not select the expected Cloud API');
   }
   const publicRoot = path.join(root, 'dist/client');
@@ -35,7 +38,7 @@ export function verifyCloudArtifact(root, env) {
   for (const file of files(publicRoot)) {
     const bytes = fs.readFileSync(file);
     if (bytes.includes(Buffer.from(env.TINA_TOKEN))) throw new Error('Private Tina token found in public artifact');
-    if (file.startsWith(admin + path.sep) && bytes.includes(Buffer.from(expected))) cloudInAdmin = true;
+    if (file.startsWith(admin + path.sep) && bytes.includes(Buffer.from(selected.href))) cloudInAdmin = true;
   }
   if (!cloudInAdmin) throw new Error('Public admin bundle is missing the expected Cloud API');
 }

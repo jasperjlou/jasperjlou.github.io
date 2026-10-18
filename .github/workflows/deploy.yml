@@ -67,8 +67,15 @@ jobs:
   restore:
     if: ${{ inputs.restore_snapshot }}
     runs-on: ubuntu-latest
+    # GitHub requires contents:write to read an unpublished recovery release.
+    # Keep the backup private to repository maintainers and scope this to restore.
+    permissions:
+      contents: write
+      pages: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Download preserved snapshot
         env:
           GH_TOKEN: ${{ github.token }}

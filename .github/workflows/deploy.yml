@@ -59,6 +59,8 @@ jobs:
           path: ./dist/client
 
   deploy:
+    # A manual run on a candidate branch validates its artifact without publishing it.
+    if: github.ref == 'refs/heads/source'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

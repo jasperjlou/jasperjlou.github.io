@@ -18,18 +18,18 @@
     "security:vendor": "node scripts/verify-security-vendors.cjs"
   },
   "dependencies": {
-    "@astrojs/node": "^11.1.1",
+    "@astrojs/node": "^11.1.9",
     "@astrojs/rss": "^4.0.19",
-    "@astrojs/sitemap": "^3.7.3",
-    "@tinacms/astro": "0.7.1",
-    "astro": "^7.2.0"
+    "@astrojs/sitemap": "^3.7.4",
+    "@tinacms/astro": "0.8.0",
+    "astro": "^7.4.1"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
-    "@tinacms/cli": "4.0.2",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "tinacms": "3.14.4",
+    "@astrojs/check": "^0.9.11",
+    "@tinacms/cli": "4.0.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tinacms": "3.15.0",
     "typescript": "^6.0.3",
     "braces": "file:vendor/braces",
     "sprintf-js": "file:vendor/sprintf-js"

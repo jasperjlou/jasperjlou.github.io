@@ -78,7 +78,7 @@ jobs:
       - name: Ensure test content was restored
         if: always()
         run: git diff --exit-code -- src/content/home/home.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: tina-editor-evidence
@@ -110,7 +110,7 @@ jobs:
           echo "$status" > evidence/npm-audit-full.exit
           node -e "const a=require('./evidence/npm-audit-full.json'); if(!a.metadata)throw Error('Audit unavailable'); console.log(JSON.stringify(a.metadata.vulnerabilities,null,2));"
           exit "$status"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: tina-full-dependency-audit
